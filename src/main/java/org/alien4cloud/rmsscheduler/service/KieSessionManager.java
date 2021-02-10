@@ -40,12 +40,10 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * In charge of :
@@ -86,8 +84,6 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
     public void init() throws IOException {
         this.ruleCompileDrl = KieUtils.loadResource("rules/schedule-workflow-main.drl");
         this.ruleCompileDsl = KieUtils.loadResource("rules/drools-poc.dsl");
-        this.recoverKieSessions();
-
         this.schedulerService = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("rms-rules-scheduler"));
 
         this.schedulerService.scheduleAtFixedRate(new Runnable() {
@@ -106,20 +102,6 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
             }
         },0, 5, TimeUnit.SECONDS);
         // TODO: this period should be configurable
-    }
-
-    /**
-     * Recovery : get rules from persistence and init sessions.
-     */
-    private void recoverKieSessions() {
-        // TODO: should be done before YorcProvider : changes in Yorc recovery could impact rules
-        Collection<Rule> initRules = this.ruleDao.listHandledRules();
-        Map<String, List<Rule>> initRulesPerDeployment = initRules.stream()
-                .collect(Collectors.groupingBy(Rule::getDeploymentId));
-        initRulesPerDeployment.forEach((deploymentId, rules) -> {
-            log.info("Init KIE session for deployment {} using {} rules", deploymentId, rules.size());
-            initKieSession(deploymentId, rules);
-        });
     }
 
     // should manage n rule per session (1 session = 1 deployment, n policies)

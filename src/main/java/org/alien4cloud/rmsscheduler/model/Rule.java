@@ -1,12 +1,7 @@
 package org.alien4cloud.rmsscheduler.model;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
-import org.elasticsearch.annotation.ESObject;
-import org.elasticsearch.annotation.NumberField;
-import org.elasticsearch.mapping.IndexType;
 
 /**
  * A rule is the Java representation of a Drools rule. It's related to an environment.
@@ -15,13 +10,7 @@ import org.elasticsearch.mapping.IndexType;
  */
 @Getter
 @Setter
-@ToString
-@ESObject
-@NoArgsConstructor
 public class Rule {
-
-    private String id;
-    
     private String environmentId;
 
     /**
@@ -52,7 +41,6 @@ public class Rule {
     /**
      * The TTL is used to define the 'temporal window' of the rule.
      */
-    @NumberField(index = IndexType.not_analyzed)
     private Integer ttl;
 
     /**
@@ -87,4 +75,21 @@ public class Rule {
      */
     private boolean handled;
 
+    public String getId() {
+        return this.environmentId + "_" + this.policyName;
+    }
+
+    @Override
+    public String toString() {
+        return "Rule{" +
+                "environmentId='" + environmentId + '\'' +
+                ", cronExpression='" + timerExpression + '\'' +
+                ", ttl='" + ttl + ' ' + ttlUnit + '\'' +
+                ", scheduleConditions=" + scheduleConditions +
+                ", conditions=" + conditions +
+                ", action='" + action + '\'' +
+                ", retryOnError=" + retryOnError +
+                ", onlyOneRunning=" + onlyOneRunning +
+                '}';
+    }
 }

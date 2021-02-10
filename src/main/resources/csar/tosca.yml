@@ -39,7 +39,7 @@ policy_types:
         type: string
         required: true
         constraints:
-          - valid_values: [cron, int]
+          - valid_values: [cron]
         default: cron
       retry_on_error:
         description: Defines if the workflow should be retried after error

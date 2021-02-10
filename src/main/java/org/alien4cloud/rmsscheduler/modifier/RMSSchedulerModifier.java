@@ -58,8 +58,9 @@ public class RMSSchedulerModifier extends TopologyModifierSupport {
 
         for (PolicyTemplate policy : policies) {
             Rule rule = new Rule();
+            rule.setId(environmentId + "_" + policy.getName());
             rule.setEnvironmentId(environmentId);
-            rule.setPolicyName(policy.getName());
+            //rule.setPolicyName(policy.getName());
             rule.setTimerType(PropertyUtil.getScalarValue(policy.getProperties().get("timer_type")));
             rule.setTimerExpression(PropertyUtil.getScalarValue(policy.getProperties().get("cron_expression")));
             rule.setRetryOnError(Boolean.valueOf(PropertyUtil.getScalarValue(policy.getProperties().get("retry_on_error"))));

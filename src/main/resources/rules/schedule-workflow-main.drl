@@ -1,0 +1,44 @@
+package rules
+
+import org.alien4cloud.rmsscheduler.model.RuleTrigger
+import org.alien4cloud.rmsscheduler.model.RuleTriggerStatus
+import org.alien4cloud.rmsscheduler.model.MetricEvent
+import org.alien4cloud.rmsscheduler.model.TickTocker
+import java.util.Date
+import java.util.Calendar
+
+declare MetricEvent
+    @role( event )
+    @timestamp( timestamp )
+    // Event TTL
+    // Shloud be at least a plugin confiruration, but could also be embedded in Events (To Be Defined)
+    @expires( 5m )
+end
+declare TickTocker
+    @propertyReactive
+    now : Date
+end
+
+rule "Main: Cancel execution rule"
+    salience 100
+	when
+	    $tickTocker: TickTocker()
+		$r: RuleTrigger(status == RuleTriggerStatus.SCHEDULED, $tickTocker.now > expirationTime)
+	then
+		modify($r) {
+            setStatus(RuleTriggerStatus.DROPPED)
+        }
+	end
+
+rule "Main: Delete execution rule"
+    salience 100
+	when
+	    $tickTocker: TickTocker()
+		$r: RuleTrigger(status != RuleTriggerStatus.RUNNING && status != RuleTriggerStatus.SCHEDULED, $tickTocker.now > expirationTime)
+	then
+		delete($r);
+	end
+
+
+
+

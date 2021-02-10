@@ -1,0 +1,17 @@
+package dsl_compile_rules
+
+import org.alien4cloud.rmsscheduler.model.MetricEvent
+
+expander drools-poc.dsl
+
+declare MetricEvent
+    @role( event )
+    @timestamp( timestamp )
+end
+
+rule "Compile Rule Test"
+	when
+%s
+	then
+	    Log "Compilation OK !"
+	end

@@ -1,0 +1,34 @@
+package dsl_rules
+
+import org.alien4cloud.rmsscheduler.model.MetricEvent
+
+expander drools-poc.dsl
+
+rule "K8S Load entre 5 et 10"
+	when
+		Le dernier "K8S_Load_Average" connu est <= à 10
+		Le dernier "K8S_Load_Average" connu est > à 5
+	then
+	    Log "---- K8S Load average Entre 5 et 10 ! ------"
+	end
+
+rule "ES Plus de 10 To"
+	when
+		Le dernier "ES_Disk_Free" connu est > à 10000
+	then
+		Log "---- More than 10000 Go (10To) avalaible on ES ! -----"
+	end
+
+rule "Sleepy K8S"
+	when
+		La charge moyenne du cluster K8S est <= à 0
+	then
+	    Log "---- K8S Load average is 0 or less, system is REALLY sleeping ! ------"
+	end
+
+rule "Active K8S"
+	when
+		La charge moyenne du cluster K8S est > à 10
+	then
+	    Log "---- K8S Load average is > 10, system is working hard ! ------"
+	end

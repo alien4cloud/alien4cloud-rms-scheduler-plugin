@@ -1,0 +1,139 @@
+package rules
+
+import org.alien4cloud.rmsscheduler.model.RuleTrigger
+import org.alien4cloud.rmsscheduler.model.RuleTriggerStatus
+import org.alien4cloud.rmsscheduler.model.MetricEvent
+import org.alien4cloud.rmsscheduler.model.TickTocker
+import java.util.Date
+import java.util.Calendar
+
+declare MetricEvent
+    @role( event )
+    @timestamp( timestamp )
+    // Event TTL
+    // Shloud be at least a plugin confiruration, but could also be embedded in Events (To Be Defined)
+    @expires( 5m )
+end
+declare TickTocker
+    @propertyReactive
+    now : Date
+end
+
+//rule "Main: CreateTickTocker"
+//when
+//    not($tickTocker:TickTocker())
+//then
+//    TickTocker tickTocker = new TickTocker();
+//    tickTocker.setNow(new Date());
+//    insert(tickTocker);
+//end
+
+//rule "Main: UpdateTickTocker"
+//    timer (cron: 0/1 * * * * ? )
+//    when
+//        $tickTocker:TickTocker()
+//    then
+//        modify($tickTocker){
+//            setNow(new Date())
+//        }
+//    end
+
+rule "Main: Cancel execution rule"
+    salience 100
+	when
+	    $tickTocker: TickTocker()
+		$r: RuleTrigger(status == RuleTriggerStatus.SCHEDULED, $tickTocker.now > expirationTime)
+	then
+		modify($r) {
+            setStatus(RuleTriggerStatus.DROPPED)
+        }
+	end
+
+rule "Main: Delete execution rule"
+    salience 100
+	when
+	    $tickTocker: TickTocker()
+		$r: RuleTrigger(status != RuleTriggerStatus.RUNNING && status != RuleTriggerStatus.SCHEDULED, $tickTocker.now > expirationTime)
+	then
+		delete($r);
+	end
+
+// [[ Dep1
+rule "Dep1: Temporal rule"
+    salience 10
+    timer ( cron: 0 0/5 * * * ? )
+	when
+	    // Here can come some additionnal scheduling condition (open days ...)
+	    // Cf. scheduleConditions
+	then
+		insert(new RuleTrigger("Dep1", "Env1", "Dep1", "Execute 'run' workflow", Calendar.MINUTE, 3));
+	end
+rule "Dep1: Conditionnal trigger rule"
+    salience 5
+	when
+	    $tickTocker: TickTocker()
+	    // The line below can be an option (onlyOneRunning)
+	    not RuleTrigger(ruleId == "Dep1", status == RuleTriggerStatus.RUNNING)
+		$r: RuleTrigger(ruleId == "Dep1", status == RuleTriggerStatus.SCHEDULED, expirationTime > $tickTocker.now)
+		// J'ai une mesure "K8S_Load_Average" récente
+		MetricEvent(label == "K8S_Load_Average")
+		// Le dernier "K8S_Load_Average" connu est inférieur ou égal à 1
+		Number( doubleValue <= 1 ) from accumulate
+		    (
+		        MetricEvent(label == "K8S_Load_Average", $value : value) over window:length(1),
+		        average($value)
+		    )
+	then
+		$r.setStatus(RuleTriggerStatus.TRIGGERED);
+		update($r);
+	end
+// Dep1 ]]
+
+// [[ DepErr
+rule "DepErr: Temporal rule"
+    salience 10
+    timer ( cron: 0 0/10 * * * ? )
+	when
+	then
+		insert(new RuleTrigger("DepErr", "EnvErr", "DepErr", "Execute 'run' workflow", Calendar.MINUTE, 5));
+	end
+rule "DepErr: Conditionnal trigger rule"
+    salience 5
+	when
+	    $tickTocker: TickTocker()
+		$r: RuleTrigger(ruleId == "DepErr", status == RuleTriggerStatus.SCHEDULED, expirationTime > $tickTocker.now)
+		// J'ai une mesure "ES_Disk_Free" récente
+		MetricEvent(label == "ES_Disk_Free")
+		// Le dernier "ES_Disk_Free" connu est supérieur à 1000
+		Number( doubleValue > 1000 ) from accumulate
+		    (
+		        MetricEvent(label == "ES_Disk_Free", $value : value) over window:length(1),
+		        average($value)
+		    )
+		// La moyenne de "ES_Disk_Free" est > à 1000 sur une fenêtre glissante de 10m
+/*		Number( doubleValue > 1000 ) from accumulate
+		    (
+		        MetricEvent(label == "ES_Disk_Free", $value : value) over window:time(10m),
+		        average($value)
+		    )*/
+	then
+		modify($r) {
+		    setStatus(RuleTriggerStatus.TRIGGERED)
+		}
+	end
+rule "DepErr: Retry rule"
+    salience 5
+    // This could be conditionnal to a "retryOnError" option
+    enabled true
+	when
+	    $tickTocker: TickTocker()
+		$r: RuleTrigger(ruleId == "DepErr", status == RuleTriggerStatus.ERROR)
+	then
+		modify($r) {
+            setStatus(RuleTriggerStatus.SCHEDULED)
+        }
+	end
+// DepErr ]]
+
+
+

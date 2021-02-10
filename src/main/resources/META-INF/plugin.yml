@@ -1,0 +1,11 @@
+id: alien4cloud-rms-scheduler-plugin
+name: RMS Scheduler Plugin
+version: ${project.version}
+description: >
+  A rule based scheduler that launch workflows.
+configuration_class: org.alien4cloud.rmsscheduler.RMSPluginContextConfiguration
+component_descriptors:
+  - bean_name: rms-scheduler-modifier
+    name: RMS Scheduler Modifier
+    description: >
+      Detect RMS policies and prepare Drools to run them.

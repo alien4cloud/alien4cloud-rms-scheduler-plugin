@@ -1,0 +1,45 @@
+package rules
+
+import org.alien4cloud.rmsscheduler.model.RuleTrigger
+import org.alien4cloud.rmsscheduler.model.RuleTriggerStatus
+import org.alien4cloud.rmsscheduler.model.MetricEvent
+import org.alien4cloud.rmsscheduler.model.TickTocker
+import java.util.Date
+import java.util.Calendar
+
+expander drools-poc.dsl
+
+rule "Dep3: Temporal rule"
+    salience 10
+    timer ( cron: 0 0/2 * * * ? )
+	when
+	then
+	    Schedule a trigger with id "Dep3" for environment "Dep3-Env" running "run" using a TTL of 1 MINUTE
+	end
+
+rule "Dep3: Conditionnal trigger rule"
+    salience 5
+	when
+	    // Only add if onlyOneRunning
+	    No running execution with id Dep3
+	    A scheduled non expired trigger exists with id Dep3
+        // Iterate over assertions
+	    Le dernier "K8S_Load_Average" connu est <= à 10
+        Le dernier "K8S_Load_Average" connu est > à 5
+	then
+	    Log "---- Lancement de Dep3 -----"
+        Fire the trigger
+	end
+
+rule "Dep3: Retry rule"
+    salience 5
+    // "retryOnError" value
+    enabled true
+	when
+        A trigger in error exists with id Dep3
+	then
+	    Log "---- Re-Schedule de Dep3 -----"
+		Reschedule the trigger
+	end
+
+

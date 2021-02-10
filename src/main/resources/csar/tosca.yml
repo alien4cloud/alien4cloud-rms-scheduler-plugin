@@ -1,0 +1,63 @@
+tosca_definitions_version: alien_dsl_2_0_0
+
+metadata:
+  template_name: org.alien4cloud.rmsscheduling
+  # Will be replaced with mvn property org.alien4cloud.scheduling.version during build
+  template_version: 3.0.0
+  template_author: alien4cloud
+
+description: |
+  Types for Job Scheduling, triggered by rules.
+
+imports:
+  - tosca-normative-types:1.0.0-ALIEN20
+  - alien-base-types:3.0.0
+
+policy_types:
+
+  org.alien4cloud.rmsscheduling.policies.RMSScheduleWorkflowPolicy:
+    derived_from: org.alien4cloud.policies.ScheduleWorkflowPolicy
+    description: |
+      A scheduled and rule based workflow policy trigger
+    properties:
+      ttl:
+        description: Trigger TTL, defines the temporal window of the trigger
+        type: integer
+        required: true
+        default: 0
+      ttl_unit:
+        description: Trigger TTL unit, defines the temporal window of the trigger
+        type: string
+        required: false
+        constraints:
+          - valid_values: [SECOND, MINUTE, HOUR, DAY, MONTH]
+        default: MINUTE
+      timer_type:
+        description: |
+          Timer type according to Drools documentation (cron, int ...).
+          See https://docs.jboss.org/drools/release/7.48.0.Final/drools-docs/html_single/index.html#drl-timers-calendars-con_drl-rules
+        type: string
+        required: true
+        constraints:
+          - valid_values: [cron]
+        default: cron
+      retry_on_error:
+        description: Defines if the workflow should be retried after error
+        type: boolean
+        default: false
+        required: true
+      only_one_running:
+        description: Defines if only one workflow should be executed at a given time (no overlap when true)
+        type: boolean
+        default: true
+        required: true
+      conditions:
+        description: |
+          List of conditions that trigger rule
+        type: list
+        required: false
+        entry_schema:
+          type: string
+    metadata:
+      # pluginId:pluginBean:phase
+      a4c_policy_impl: alien4cloud-rms-scheduler-plugin:rms-scheduler-modifier:post-policy-match

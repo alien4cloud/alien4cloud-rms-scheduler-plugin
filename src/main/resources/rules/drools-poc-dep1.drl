@@ -1,0 +1,43 @@
+package rules.dep1
+
+import alien4cloud.rules.RuleTrigger
+import alien4cloud.rules.RuleTriggerStatus
+import alien4cloud.rules.MetricEvent
+import java.util.Date
+import java.util.Calendar
+
+declare TemporalWindowPolicy
+    @role( event )
+    @timestamp( timestamp )
+    timestamp : Date
+    deploymentId: String
+    // Rule TTL
+    @expires( 3m )
+end
+
+// [[ Dep1
+rule "Dep1: Temporal rule"
+    salience 10
+    timer ( cron: 0 0/5 * * * ? )
+	when
+	    // Here can come some additionnal scheduling condition (open days ...)
+	    // Cf. scheduleConditions
+	then
+		insert(new RuleTrigger("Dep1", "Execute 'run' workflow", Calendar.MINUTE, 3));
+		TemporalWindowPolicy temporalPolicy = new TemporalWindowPolicy();
+		temporalPolicy.setTimestamp(new Date());
+		temporalPolicy.setDeploymentId("Dep1");
+		insert(temporalPolicy);
+	end
+rule "Dep1: Expire rule"
+    activation-group "trigger-dep1"
+    salience 10
+	when
+	    not TemporalWindowPolicy(deploymentId == "Dep1")
+		$r: RuleTrigger(deploymentId == "Dep1", status == RuleTriggerStatus.SCHEDULED)
+	then
+		$r.setStatus(RuleTriggerStatus.DROPPED);
+		update($r);
+	end
+// Dep1 ]]
+

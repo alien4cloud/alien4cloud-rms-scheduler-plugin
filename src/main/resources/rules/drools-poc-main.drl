@@ -1,0 +1,39 @@
+package rules.main
+
+import alien4cloud.rules.RuleTrigger
+import alien4cloud.rules.RuleTriggerStatus
+import alien4cloud.rules.MetricEvent
+import java.util.Date
+import java.util.Calendar
+
+declare MetricEvent
+    @role( event )
+    @timestamp( timestamp )
+    // Event TTL
+    // Shloud be at least a plugin confiruration, but could also be embedded in Events (To Be Defined)
+    @expires( 5m )
+end
+
+rule "Main: Cancel execution rule"
+    salience 100
+	when
+	    $tickTocker: TickTocker()
+		$r: RuleTrigger(status == RuleTriggerStatus.SCHEDULED, $tickTocker.now > expirationTime)
+	then
+		modify($r) {
+            setStatus(RuleTriggerStatus.DROPPED)
+        }
+	end
+
+rule "Main: Delete execution rule"
+    salience 100
+	when
+	    $tickTocker: TickTocker()
+		$r: RuleTrigger(status != RuleTriggerStatus.RUNNING && status != RuleTriggerStatus.SCHEDULED, $tickTocker.now > expirationTime)
+	then
+		delete($r);
+	end
+
+
+
+

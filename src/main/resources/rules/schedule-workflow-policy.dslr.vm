@@ -1,0 +1,46 @@
+package rules
+
+import org.alien4cloud.rmsscheduler.model.RuleTrigger
+import org.alien4cloud.rmsscheduler.model.RuleTriggerStatus
+import org.alien4cloud.rmsscheduler.model.MetricEvent
+import org.alien4cloud.rmsscheduler.model.TickTocker
+import java.util.Date
+import java.util.Calendar
+
+expander drools-poc.dsl
+
+rule "$rule.id: Schedule rule"
+    salience 10
+    timer ( $rule.timerType: $rule.timerExpression )
+	when
+	    // TODO: here insert scheduleConditions
+	then
+	    Schedule a trigger with id "$rule.id" for environment "$rule.environmentId" deployment "$rule.deploymentId" running "$rule.action" using a TTL of $rule.ttl $rule.ttlUnit
+	end
+
+rule "$rule.id: Conditionnal trigger rule"
+    salience 5
+	when
+	    // Only add if onlyOneRunning
+#if($rule.onlyOneRunning)
+	    No running execution with id $rule.id
+#end## if($rule.onlyOneRunning)
+	    A scheduled non expired trigger exists with id $rule.id
+        // Iterate over assertions
+$rule.conditions
+
+	then
+	    Log "---- Trigger $rule.id -----"
+        Fire the trigger
+	end
+
+rule "$rule.id: Retry rule"
+    salience 5
+    // "retryOnError" value
+    enabled $rule.retryOnError
+	when
+        A trigger in error exists with id $rule.id
+	then
+	    Log "---- Re-schedule de $rule.id -----"
+		Reschedule the trigger
+	end

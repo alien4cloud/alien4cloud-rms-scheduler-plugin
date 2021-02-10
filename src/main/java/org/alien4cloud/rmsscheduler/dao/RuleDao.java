@@ -67,7 +67,7 @@ public class RuleDao extends ESGenericSearchDAO {
         Iterator<Rule> stored = store.iterator();
         while (stored.hasNext()) {
             Rule rule = stored.next();
-            if (rule.getDeploymentId().equals(deploymentId) && rule.isHandled()) {
+            if (deploymentId.equals(rule.getDeploymentId()) && rule.isHandled()) {
                 stored.remove();
                 this.delete(Rule.class, rule.getId());
             }

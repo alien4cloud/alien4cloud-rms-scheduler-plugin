@@ -19,7 +19,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
 /**
@@ -68,6 +67,7 @@ public class RMSSchedulerModifier extends TopologyModifierSupport {
             rule.setLoop(Boolean.valueOf(PropertyUtil.getScalarValue(policy.getProperties().get("loop"))));
             rule.setDuration(PropertyUtil.getScalarValue(policy.getProperties().get("duration")));
             rule.setRescheduleDelay(PropertyUtil.getScalarValue(policy.getProperties().get("reschedule_delay")));
+            rule.setMaxRun(Integer.parseInt(PropertyUtil.getScalarValue(policy.getProperties().get("max_run"))));
             rule.setAction(PropertyUtil.getScalarValue(policy.getProperties().get("workflow_name")));
             ListPropertyValue conditions = (ListPropertyValue)policy.getProperties().get("conditions");
             final StringBuilder conditionsBuilder = new StringBuilder();
@@ -84,6 +84,7 @@ public class RMSSchedulerModifier extends TopologyModifierSupport {
                 });
             }
             rule.setConditions(conditionsBuilder.toString());
+            context.getLog().info("Rule prepared for policy " + policy.getName());
 
             ruleSet.add(rule);
             ruleDao.create(environmentId, ruleSet);

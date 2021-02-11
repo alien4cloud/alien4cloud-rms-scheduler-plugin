@@ -1,6 +1,9 @@
 # alien4cloud-rms-scheduler-plugin
 A rule based scheduler embedding drools.
 
+A runtime policy of `RMSScheduleWorkflowPolicy` type is defined in the embeded [csar](src/main/resources/csar/tosca.yml).
+
+
 # Config
 
 This plugin can be tuned by setting following properties in A4C YAML configuration 
@@ -74,6 +77,9 @@ conditions:
  - "Average value for metric \"ES_Disk_Free\" during last 10m is > 10000"
 workflow_name: run
 ```
+
+# 
+
 
 # TODO
 

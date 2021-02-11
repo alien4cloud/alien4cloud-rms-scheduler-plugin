@@ -16,7 +16,7 @@ rule "$rule.id: Schedule rule"
 	    No scheduled trigger exists with id $rule.id
 	    // TODO: here insert scheduleConditions
 	then
-	    Schedule a trigger with id "$rule.id" for environment "$rule.environmentId" deployment "$rule.deploymentId" running "$rule.action" using a TTL of $rule.duration
+	    Schedule a trigger with id "$rule.id" for environment "$rule.environmentId" deployment "$rule.deploymentId" running "$rule.action" using a TTL of $rule.duration and a max of $rule.maxRun
 	end
 
 rule "$rule.id: Conditionnal trigger rule"

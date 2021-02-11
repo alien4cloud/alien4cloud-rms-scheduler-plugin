@@ -18,7 +18,8 @@ policy_types:
   org.alien4cloud.rmsscheduling.policies.RMSScheduleWorkflowPolicy:
     derived_from: org.alien4cloud.policies.ScheduleWorkflowPolicy
     description: |
-      A scheduled and rule based workflow policy trigger
+      A scheduled and rule based workflow policy trigger.
+      You can define a time window during which an action can be execucted, if conditions are mets.
     properties:
       duration:
         description: Duration of the time window ex 5m or 4h or 1d
@@ -34,29 +35,39 @@ policy_types:
         constraints:
           - valid_values: [cron, int]
         default: cron
+      cron_expression:
+        description: Cron expression that defines schedule rules (each hour...).
+        type: string
+        required: true
+        default: "0 0/5 * * * ?"
       retry_on_error:
-        description: Defines if the workflow should be retried after error
+        description: Defines if the workflow should be retried after error.
         type: boolean
         default: false
         required: true
       loop:
-        description: Reschedule even if success but only during time window
+        description: Reschedule even if success (but only during time window).
         type: boolean
         default: false
         required: true
       reschedule_delay:
-        description: The delay beetween reschedules (after error or if looping), ex 30s or 10m or 2h
+        description: The delay beetween reschedules (after error or while looping), ex 30s or 10m or 2h.
         type: string
         default: 10s
         required: true
+      max_run:
+        description: Max run count (in case of error and retry_on_error or loop mode). -1 (default) means no limit.
+        type: integer
+        default: -1
+        required: true
       only_one_running:
-        description: Defines if only one workflow should be executed at a given time (no overlap when true)
+        description: Defines if only one workflow should be executed at a given time (no overlap when true).
         type: boolean
         default: true
         required: true
       conditions:
         description: |
-          List of conditions that trigger rule
+          List of conditions that trigger rule.
         type: list
         required: false
         entry_schema:

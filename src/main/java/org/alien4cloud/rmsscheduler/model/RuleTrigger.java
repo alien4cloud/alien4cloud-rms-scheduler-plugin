@@ -11,6 +11,8 @@ import java.util.Date;
 /**
  * A RuleTrigger represents an instance of a scheduled rule.
  * It's created by Drools rules themself and their changes are listened in order to execute action (ie. launch workflow).
+ *
+ * A RuleTrigger has a scheduleTime (begin of the temporal window inside it can trigger) and a expirationTime (end of this same temporal window).
  */
 @Getter
 @Setter
@@ -45,11 +47,19 @@ public class RuleTrigger {
      */
     private Date expirationTime;
 
-    public RuleTrigger(String ruleId, String environmentId, String deploymentId, String action, String expirationDelai) {
+    /**
+     * The maximum the action will be repeated (in case of ERROR and retry_on_error or loop mode).
+     */
+    private int maxRun = -1;
+
+    private int runCount = 0;
+
+    public RuleTrigger(String ruleId, String environmentId, String deploymentId, String action, String expirationDelai, int maxRun) {
         this.ruleId = ruleId;
         this.environmentId = environmentId;
         this.deploymentId = deploymentId;
         this.action = action;
+        this.maxRun = maxRun;
         long expirationDelay = TimeUtils.parseTimeString(expirationDelai);;
         // FIXME: quelque chose me fait penser que c'est pas à lui de faire ça
         // Utiliser l'expiration des events dans drools ?
@@ -59,11 +69,25 @@ public class RuleTrigger {
         this.status = RuleTriggerStatus.SCHEDULED;
     }
 
+    public void activate() {
+        this.runCount++;
+        this.status = RuleTriggerStatus.TRIGGERED;
+    }
+
+    /**
+     * FIXME : not a good idea to have logic here, logic must be in rules !
+     * @param delay
+     */
     public void reschedule(String delay) {
-        this.status = RuleTriggerStatus.SCHEDULED;
-        long scheduleDelay = TimeUtils.parseTimeString(delay);
-        Calendar cal = Calendar.getInstance();
-        this.scheduleTime = new Date(cal.getTimeInMillis() + scheduleDelay);
+        if (this.maxRun < 0 || ++this.runCount < this.maxRun) {
+            // wa can schedule again
+            this.status = RuleTriggerStatus.SCHEDULED;
+            long scheduleDelay = TimeUtils.parseTimeString(delay);
+            Calendar cal = Calendar.getInstance();
+            this.scheduleTime = new Date(cal.getTimeInMillis() + scheduleDelay);
+        } else {
+            this.status = RuleTriggerStatus.DROPPED;
+        }
     }
 
 }

@@ -79,6 +79,11 @@ public class Rule {
     private String rescheduleDelay;
 
     /**
+     * The maximum the action will be repeated (in case of ERROR and retry_on_error or loop mode).
+     */
+    private int maxRun = -1;
+
+    /**
      * Defines if only one action should be executed at a given time (no overlap when true).
      */
     private boolean onlyOneRunning;

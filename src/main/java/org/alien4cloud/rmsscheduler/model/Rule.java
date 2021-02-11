@@ -62,7 +62,7 @@ public class Rule {
     /**
      * The final action this rule was written for. For the moment only the workflow name.
      *
-     * TODO: Represent the action : launchWorkflow(run), executeOperation()
+     * TODO: Represent the action : launchWorkflow(run), executeOperation(node, operation)
      */
     private String action;
 

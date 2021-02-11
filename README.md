@@ -6,7 +6,7 @@ A rule based scheduler embedding drools.
 Add the **RMS Scheduler Modifier** to your location at **post-policy-match** phase.
 Create a topology using simple mocks and add one or several **RMSScheduleWorkflowPolicy** to your topology.
 
-The following policy config example will trigger the run workflow each hour at 0 and 30 minutes with a TTL of 10 minutes (if workflow fails, it will be retried during 10 minutes) :
+The following policy config example will trigger the run workflow (you need a run workflow !) each hour at 0 and 30 minutes with a TTL of 10 minutes (if workflow fails, it will be retried during 10 minutes) :
 
 Property name | value
 ------------ | -------------
@@ -40,6 +40,8 @@ curl -X PUT http://localhost:8088/rest/rmsscheduler/events/publish/ES_Disk_Free/
 
 Events are timestamped and have a TTL of 5m (TODO: make plugin configurable)
 
+Another example condition could also be `Average value for metric "ES_Disk_Free" during last 10m is > 10000`.
+
 # TODO
 
 - Plugin configuration (metric event TTL, heart beat period ...)
@@ -51,6 +53,6 @@ Events are timestamped and have a TTL of 5m (TODO: make plugin configurable)
 ## Ideas
 
 Ability to cancel a workflow when it's expiration occurs ?
-How-to retry after a given period ?
+How-to retry after a given period in case of error ?
 Number of retry ? -1 = infinite
 

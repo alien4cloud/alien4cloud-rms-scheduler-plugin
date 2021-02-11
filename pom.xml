@@ -98,11 +98,11 @@
     <distributionManagement>
         <repository>
             <id>repo.opensource.fastconnect.org</id>
-            <url>https://fastconnect.org/maven/content/repositories/opensource</url>
+            <url>https://www.portaildulibre.fr/nexus/repository/opensource-releases</url>
         </repository>
         <snapshotRepository>
             <id>repo.opensource.snapshot.fastconnect.org</id>
-            <url>https://fastconnect.org/maven/content/repositories/opensource-snapshot</url>
+            <url>https://www.portaildulibre.fr/nexus/repository/opensource-snapshots</url>
         </snapshotRepository>
     </distributionManagement>
 

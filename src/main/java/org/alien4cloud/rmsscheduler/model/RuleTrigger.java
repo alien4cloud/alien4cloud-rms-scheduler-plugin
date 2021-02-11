@@ -3,6 +3,7 @@ package org.alien4cloud.rmsscheduler.model;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.drools.core.time.TimeUtils;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -44,16 +45,25 @@ public class RuleTrigger {
      */
     private Date expirationTime;
 
-    public RuleTrigger(String ruleId, String environmentId, String deploymentId, String action, int expirationField, int expirationAmount) {
+    public RuleTrigger(String ruleId, String environmentId, String deploymentId, String action, String expirationDelai) {
         this.ruleId = ruleId;
         this.environmentId = environmentId;
         this.deploymentId = deploymentId;
         this.action = action;
+        long expirationDelay = TimeUtils.parseTimeString(expirationDelai);;
+        // FIXME: quelque chose me fait penser que c'est pas à lui de faire ça
+        // Utiliser l'expiration des events dans drools ?
         Calendar cal = Calendar.getInstance();
         this.scheduleTime = new Date(cal.getTimeInMillis());
-        cal.add(expirationField, expirationAmount);
-        this.expirationTime = new Date(cal.getTimeInMillis());
+        this.expirationTime = new Date(cal.getTimeInMillis() + expirationDelay);
         this.status = RuleTriggerStatus.SCHEDULED;
+    }
+
+    public void reschedule(String delay) {
+        this.status = RuleTriggerStatus.SCHEDULED;
+        long scheduleDelay = TimeUtils.parseTimeString(delay);
+        Calendar cal = Calendar.getInstance();
+        this.scheduleTime = new Date(cal.getTimeInMillis() + scheduleDelay);
     }
 
 }

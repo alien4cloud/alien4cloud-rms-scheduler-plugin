@@ -20,18 +20,11 @@ policy_types:
     description: |
       A scheduled and rule based workflow policy trigger
     properties:
-      ttl:
-        description: Trigger TTL, defines the temporal window of the trigger
-        type: integer
-        required: true
-        default: 0
-      ttl_unit:
-        description: Trigger TTL unit, defines the temporal window of the trigger
+      duration:
+        description: Duration of the time window ex 5m or 4h or 1d
         type: string
-        required: false
-        constraints:
-          - valid_values: [SECOND, MINUTE, HOUR, DAY, MONTH]
-        default: MINUTE
+        required: true
+        default: 0s
       timer_type:
         description: |
           Timer type according to Drools documentation (cron, int ...).
@@ -45,6 +38,16 @@ policy_types:
         description: Defines if the workflow should be retried after error
         type: boolean
         default: false
+        required: true
+      loop:
+        description: Reschedule even if success but only during time window
+        type: boolean
+        default: false
+        required: true
+      reschedule_delay:
+        description: The delay beetween reschedules (after error or if looping), ex 30s or 10m or 2h
+        type: string
+        default: 10s
         required: true
       only_one_running:
         description: Defines if only one workflow should be executed at a given time (no overlap when true)

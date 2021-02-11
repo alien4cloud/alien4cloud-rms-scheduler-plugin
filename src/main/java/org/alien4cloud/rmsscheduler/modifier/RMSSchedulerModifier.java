@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
 /**
@@ -64,15 +65,18 @@ public class RMSSchedulerModifier extends TopologyModifierSupport {
             rule.setTimerExpression(PropertyUtil.getScalarValue(policy.getProperties().get("cron_expression")));
             rule.setRetryOnError(Boolean.valueOf(PropertyUtil.getScalarValue(policy.getProperties().get("retry_on_error"))));
             rule.setOnlyOneRunning(Boolean.valueOf(PropertyUtil.getScalarValue(policy.getProperties().get("only_one_running"))));
-            rule.setTtl(Integer.parseInt(PropertyUtil.getScalarValue(policy.getProperties().get("ttl"))));
-            rule.setTtlUnit(PropertyUtil.getScalarValue(policy.getProperties().get("ttl_unit")));
+            rule.setLoop(Boolean.valueOf(PropertyUtil.getScalarValue(policy.getProperties().get("loop"))));
+            rule.setDuration(PropertyUtil.getScalarValue(policy.getProperties().get("duration")));
+            rule.setRescheduleDelay(PropertyUtil.getScalarValue(policy.getProperties().get("reschedule_delay")));
             rule.setAction(PropertyUtil.getScalarValue(policy.getProperties().get("workflow_name")));
             ListPropertyValue conditions = (ListPropertyValue)policy.getProperties().get("conditions");
             final StringBuilder conditionsBuilder = new StringBuilder();
             if (conditions != null && conditions.getValue() != null && !conditions.getValue().isEmpty()) {
                 conditions.getValue().forEach(o -> {
                     String r = o.toString();
-                    if (!ruleValidator.verify(r)) {
+                    if (ruleValidator.verify(r)) {
+                        context.getLog().info("Accepted rule condition: " + r);
+                    } else {
                         // TODO: better context log when errors
                         context.getLog().error("Unparsable rule condition statement : " + r);
                     }
@@ -80,7 +84,6 @@ public class RMSSchedulerModifier extends TopologyModifierSupport {
                 });
             }
             rule.setConditions(conditionsBuilder.toString());
-            log.info("rules created: " + rule);
 
             ruleSet.add(rule);
             ruleDao.create(environmentId, ruleSet);

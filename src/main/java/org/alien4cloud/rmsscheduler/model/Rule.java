@@ -41,13 +41,10 @@ public class Rule {
      */
     private String timerExpression;
 
-    private String ttlUnit;
-
     /**
-     * The TTL is used to define the 'temporal window' of the rule.
+     * Duration of the time window ex 5m or 4h or 1d.
      */
-    @NumberField(index = IndexType.not_analyzed)
-    private Integer ttl;
+    private String duration;
 
     /**
      * A string representation of the schedule conditions of the rule.
@@ -70,6 +67,16 @@ public class Rule {
      * Defines if the rule should be rescheduled when the action terminates with error.
      */
     private boolean retryOnError;
+
+    /**
+     * Reschedule even if success but only during time window.
+     */
+    private boolean loop;
+
+    /**
+     * The delay beetween reschedules (after error or if looping), ex 30s or 10m or 2h.
+     */
+    private String rescheduleDelay;
 
     /**
      * Defines if only one action should be executed at a given time (no overlap when true).

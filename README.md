@@ -1,6 +1,24 @@
 # alien4cloud-rms-scheduler-plugin
 A rule based scheduler embedding drools.
 
+# Config
+
+This plugin can be tuned by setting following properties in A4C YAML configuration 
+(prefix is `alien4cloud-rms-scheduler-plugin`) :
+
+Property name | default | description 
+------------ | -------------| -------------
+metricEventTtl | 10m | The TTL for events : you should set this config regarding to the frequency with witch you expect to receive events in your loopback.
+heartbeatPeriod | 60 | In seconds, the period between 2 rule fires. A heartbeat will fire all rules on each session (1 session per active deployments).
+
+For tests purposes you should reduce `heartbeatPeriod` in order to make the system more reactive.
+
+```
+alien4cloud-rms-scheduler-plugin:
+  metricEventTtl: 10m
+  heartbeatPeriod: 1
+```
+
 # How-to
 
 Add the **RMS Scheduler Modifier** to your location at **post-policy-match** phase.
@@ -13,8 +31,7 @@ Property name | value
 cron_expression | 0 0/30 * * * ?
 timer_type | cron
 workflow_name | run
-ttl | 10
-ttl_unit | MINUTE
+duration | 10m
 retry_on_error | true
 
 This other example will trigger run workflow after a 10 minutes delay (after the deployment, or system start), if conditions are satisfied (with temporal window of 2 minutes) :
@@ -24,8 +41,7 @@ Property name | value
 cron_expression | 10m
 timer_type | int
 workflow_name | run
-ttl | 2
-ttl_unit | MINUTE
+duration | 2m
 conditions[0] | I've got a recent value for metric "ES_Disk_Free"
 conditions[1] | Last known metric "ES_Disk_Free" is >= 10000
 
@@ -42,9 +58,25 @@ Events are timestamped and have a TTL of 5m (TODO: make plugin configurable)
 
 Another example condition could also be `Average value for metric "ES_Disk_Free" during last 10m is > 10000`.
 
+## Loops
+
+In the example policy configuration below, if conditions are met, the policy will loop during 3m, with a delay between each triggers of 45s. 
+ :
+
+```
+timer_type: cron
+cron_expression: "0 0/5 * * * ?"
+duration: 3m
+loop: true
+reschedule_delay: 45s
+only_one_running: true
+conditions: 
+ - "Average value for metric \"ES_Disk_Free\" during last 10m is > 10000"
+workflow_name: run
+```
+
 # TODO
 
-- Plugin configuration (metric event TTL, heart beat period ...)
 - DSL editor
 - Manage deployment update
 - Manage downtime ? 
@@ -56,3 +88,11 @@ Ability to cancel a workflow when it's expiration occurs ?
 How-to retry after a given period in case of error ?
 Number of retry ? -1 = infinite
 
+Should be possible to launch a workflow during the time window even if SUCESS
+
+reschedule_delay
+    int expression
+    the delay beetween reschedules (after error or if looping)
+loop
+    boolean
+    if true will loop the action during time window

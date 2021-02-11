@@ -8,8 +8,10 @@ import alien4cloud.events.DeploymentUndeployedEvent;
 import alien4cloud.model.deployment.Deployment;
 import alien4cloud.paas.IPaaSCallback;
 import alien4cloud.rest.application.model.LaunchWorkflowRequest;
+import alien4cloud.tosca.serializer.VelocityUtil;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
+import org.alien4cloud.rmsscheduler.RMSPluginConfiguration;
 import org.alien4cloud.rmsscheduler.dao.RuleDao;
 import org.alien4cloud.rmsscheduler.dao.SessionDao;
 import org.alien4cloud.rmsscheduler.dao.SessionHandler;
@@ -18,6 +20,7 @@ import org.alien4cloud.rmsscheduler.model.RuleTrigger;
 import org.alien4cloud.rmsscheduler.model.RuleTriggerStatus;
 import org.alien4cloud.rmsscheduler.model.TickTocker;
 import org.alien4cloud.rmsscheduler.utils.KieUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.lucene.util.NamedThreadFactory;
 import org.jbpm.process.core.timer.impl.QuartzSchedulerService;
 import org.kie.api.KieBase;
@@ -39,10 +42,8 @@ import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.io.StringWriter;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -78,6 +79,9 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
     @Inject
     private WorkflowExecutionService workflowExecutionService;
 
+    @Resource
+    private RMSPluginConfiguration pluginConfiguration;
+
     /**
      * Executor service in charge of regularly fire rules for existing sessions.
      */
@@ -85,12 +89,21 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
 
     @PostConstruct
     public void init() throws IOException {
-        this.ruleCompileDrl = KieUtils.loadResource("rules/schedule-workflow-main.drl");
+        // Generate main.drl from template
+        Map<String, Object> velocityCtx = new HashMap<>();
+        velocityCtx.put("pluginConfiguration", pluginConfiguration);
+        StringWriter writer = new StringWriter();
+        VelocityUtil.generate("rules/schedule-workflow-main.drl.vm", writer, velocityCtx);
+        this.ruleCompileDrl = writer.toString();
+        log.info("Will use this main DRL : {}", this.ruleCompileDrl);
+
         this.ruleCompileDsl = KieUtils.loadResource("rules/schedule-workflow.dsl");
+        // TODO: should load embeded DSLs
         this.recoverKieSessions();
 
         this.schedulerService = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("rms-rules-scheduler"));
 
+        log.info("Fire rule heartbeat period : {}s", pluginConfiguration.getHeartbeatPeriod());
         // TODO: use quartz scheduler
         this.schedulerService.scheduleAtFixedRate(new Runnable() {
             @Override
@@ -106,7 +119,7 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
                     kieSession.fireAllRules();
                 });
             }
-        },0, 1, TimeUnit.SECONDS);
+        },0, pluginConfiguration.getHeartbeatPeriod(), TimeUnit.SECONDS);
         // TODO: this period should be configurable
     }
 

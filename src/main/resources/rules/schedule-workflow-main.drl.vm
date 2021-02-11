@@ -12,7 +12,7 @@ declare MetricEvent
     @timestamp( timestamp )
     // Event TTL
     // Shloud be at least a plugin confiruration, but could also be embedded in Events (To Be Defined)
-    @expires( 5m )
+    @expires( $pluginConfiguration.metricEventTtl )
 end
 declare TickTocker
     @propertyReactive

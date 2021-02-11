@@ -16,7 +16,7 @@ rule "$rule.id: Schedule rule"
 	    No scheduled trigger exists with id $rule.id
 	    // TODO: here insert scheduleConditions
 	then
-	    Schedule a trigger with id "$rule.id" for environment "$rule.environmentId" deployment "$rule.deploymentId" running "$rule.action" using a TTL of $rule.ttl $rule.ttlUnit
+	    Schedule a trigger with id "$rule.id" for environment "$rule.environmentId" deployment "$rule.deploymentId" running "$rule.action" using a TTL of $rule.duration
 	end
 
 rule "$rule.id: Conditionnal trigger rule"
@@ -40,8 +40,19 @@ rule "$rule.id: Retry rule"
     // "retryOnError" value
     enabled $rule.retryOnError
 	when
-        A trigger in error exists with id $rule.id
+        A trigger in ERROR exists with id $rule.id
 	then
 	    Log "---- Re-schedule de $rule.id -----"
-		Reschedule the trigger
+		Reschedule the trigger in $rule.rescheduleDelay
+	end
+
+rule "$rule.id: Loop rule"
+    salience 5
+    // "retryOnError" value
+    enabled $rule.loop
+	when
+        A trigger in SUCCESS exists with id $rule.id
+	then
+	    Log "---- Re-schedule de $rule.id -----"
+		Reschedule the trigger in $rule.rescheduleDelay
 	end

@@ -2,6 +2,7 @@ package org.alien4cloud.rmsscheduler.model;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -12,7 +13,36 @@ import java.util.Date;
  */
 @Getter
 @Setter
+@ToString
 public class RuleTrigger {
+
+    /**
+     * Should be unique for a given deployment. environmentId_policyName is a good candidate.
+     */
+    private String ruleId;
+    private String environmentId;
+    private String deploymentId;
+
+    /**
+     * When triggered, the execution is set (see @{@link org.alien4cloud.rmsscheduler.service.WorkflowListener})
+     */
+    private String executionId;
+
+    /**
+     * The action to execute, typically the name of the workflow to launch.
+     */
+    private String action;
+    private RuleTriggerStatus status;
+
+    /**
+     * Start of the time window the workflow can be launched.
+     */
+    private Date scheduleTime;
+
+    /**
+     * End of the time window the workflow can be launched.
+     */
+    private Date expirationTime;
 
     public RuleTrigger(String ruleId, String environmentId, String deploymentId, String action, int expirationField, int expirationAmount) {
         this.ruleId = ruleId;
@@ -26,25 +56,4 @@ public class RuleTrigger {
         this.status = RuleTriggerStatus.SCHEDULED;
     }
 
-    private String ruleId;
-    private String environmentId;
-    private String deploymentId;
-    private String executionId;
-    private String action;
-    private RuleTriggerStatus status;
-    private Date scheduleTime;
-    private Date expirationTime;
-
-    @Override
-    public String toString() {
-        return "RuleTrigger{" +
-                "ruleId='" + ruleId + '\'' +
-                ", environmentId='" + environmentId + '\'' +
-                ", deploymentId='" + deploymentId + '\'' +
-                ", action='" + action + '\'' +
-                ", status=" + status +
-                ", scheduleTime=" + scheduleTime +
-                ", expirationTime=" + expirationTime +
-                '}';
-    }
 }

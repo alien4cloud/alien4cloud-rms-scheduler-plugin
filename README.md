@@ -17,7 +17,7 @@ ttl | 10
 ttl_unit | MINUTE
 retry_on_error | true
 
-This other example will trigger run workflow each 10 minutes if conditions are satisfied (with temporal window of 2 minutes) :
+This other example will trigger run workflow after a 10 minutes delay (after the deployment, or system start), if conditions are satisfied (with temporal window of 2 minutes) :
 
 Property name | value
 ------------ | -------------
@@ -33,13 +33,16 @@ Condition are :
 - **ES_Disk_Free** metrics exists in the system
 - **ES_Disk_Free >= 10000** (let's say it's Go so 10 To)
 
-You can trigger an event of type **ES_Disk_Free** using the following REST query :
+You can publish an event of type **ES_Disk_Free** using the following REST query :
 ```
 curl -X PUT http://localhost:8088/rest/rmsscheduler/events/publish/ES_Disk_Free/20000
 ```
 
+Events are timestamped and have a TTL of 5m (TODO: make plugin configurable)
+
 # TODO
 
+- Plugin configuration (metric event TTL, heart beat period ...)
 - DSL editor
 - Manage deployment update
 - Manage downtime ? 

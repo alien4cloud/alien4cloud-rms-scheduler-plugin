@@ -13,6 +13,7 @@ rule "$rule.id: Schedule rule"
     salience 10
     timer ( $rule.timerType: $rule.timerExpression )
 	when
+	    No scheduled trigger exists with id $rule.id
 	    // TODO: here insert scheduleConditions
 	then
 	    Schedule a trigger with id "$rule.id" for environment "$rule.environmentId" deployment "$rule.deploymentId" running "$rule.action" using a TTL of $rule.ttl $rule.ttlUnit

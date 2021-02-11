@@ -27,9 +27,9 @@ public class RuleValidator {
 
     @PostConstruct
     public void init() throws IOException {
-        this.ruleCompileTemplate = KieUtils.loadResource("com/rule/drools-poc.dsrlt");
-        this.ruleCompileDsl = KieUtils.loadResource("com/rule/drools-poc.dsl");
-        log.debug("Rule Compile template : {}", this.ruleCompileTemplate);
+        this.ruleCompileTemplate = KieUtils.loadResource("rules/drools-poc.dsrlt");
+        this.ruleCompileDsl = KieUtils.loadResource("rules/schedule-workflow.dsl");
+        log.debug("DSL Loaded : {}", this.ruleCompileDsl);
     }
 
     /**

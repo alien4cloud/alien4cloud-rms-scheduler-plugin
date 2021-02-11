@@ -30,12 +30,6 @@ public class Rule {
     private String deploymentId;
 
     /**
-     * The name of the policy in the topology.
-     * environmentId + policyId is a good canditate for a ruleID ?
-     */
-    private String policyName;
-
-    /**
      * Timer type according to Drools documentation (cron, int ...).
      * See https://docs.jboss.org/drools/release/7.48.0.Final/drools-docs/html_single/index.html#drl-timers-calendars-con_drl-rules
      */

@@ -12,22 +12,3 @@ Number( doubleValue {operator} {metric_value} ) from accumulate
     MetricEvent(label == "{metric_label}", $value : value) over window:length(1),
     average($value)
 )
-[when][]J'ai une mesure "{metric_label}" récente=MetricEvent(label == "{metric_label}")
-[when][]Le dernier "{metric_label}" connu est {operator} à {metric_value}=
-Number( doubleValue {operator} {metric_value} ) from accumulate
-(
-    MetricEvent(label == "{metric_label}", $value : value) over window:length(1),
-    average($value)
-)
-[when][]La charge moyenne du cluster K8S est {operator} à {metric_value}=
-    (
-        MetricEvent(label == "K8S_Load_Average")
-    )
-    and
-    (
-        Number( doubleValue {operator} {metric_value} ) from accumulate
-            (
-                MetricEvent(label == "K8S_Load_Average", $value : value) over window:length(1),
-                average($value)
-            )
-    )

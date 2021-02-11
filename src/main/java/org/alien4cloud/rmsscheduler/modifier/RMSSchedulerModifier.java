@@ -75,7 +75,7 @@ public class RMSSchedulerModifier extends TopologyModifierSupport {
                     String r = o.toString();
                     if (!ruleValidator.verify(r)) {
                         // TODO: better context log when errors
-                        context.getLog().error("Rule mismatch : " + r);
+                        context.getLog().error("Unparsable rule condition statement : " + r);
                     }
                     conditionsBuilder.append("\r\n").append(r);
                 });

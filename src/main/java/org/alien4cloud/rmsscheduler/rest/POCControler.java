@@ -4,7 +4,6 @@ import alien4cloud.rest.model.RestError;
 import alien4cloud.rest.model.RestResponse;
 import alien4cloud.rest.model.RestResponseBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.alien4cloud.rmsscheduler.dao.RuleDao;
 import org.alien4cloud.rmsscheduler.dao.SessionDao;
 import org.alien4cloud.rmsscheduler.dao.SessionHandler;
 import org.alien4cloud.rmsscheduler.model.*;
@@ -83,8 +82,8 @@ public class POCControler {
 
     @PostConstruct
     public void init() throws IOException {
-        this.ruleCompileTemplate = loadResource("com/rule/drools-poc.dsrlt");
-        this.ruleCompileDsl = loadResource("com/rule/drools-poc.dsl");
+        this.ruleCompileTemplate = loadResource("com/rulessss/drools-poc.dsrlt");
+        this.ruleCompileDsl = loadResource("com/rulessss/drools-poc.dsl");
         log.info("Rule Compile template : {}", this.ruleCompileTemplate);
 
         this.schedulerService.scheduleAtFixedRate(new Runnable() {

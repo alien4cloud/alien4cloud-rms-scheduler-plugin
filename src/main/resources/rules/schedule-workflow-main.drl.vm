@@ -19,7 +19,7 @@ declare TickTocker
     now : Date
 end
 
-rule "Main: Cancel execution rule"
+rule "Main: Cancel schedule rule"
     salience 100
 	when
 	    $tickTocker: TickTocker()
@@ -27,6 +27,17 @@ rule "Main: Cancel execution rule"
 	then
 		modify($r) {
             setStatus(RuleTriggerStatus.DROPPED)
+        }
+	end
+
+rule "Main: Timeout execution rule"
+    salience 100
+	when
+	    $tickTocker: TickTocker()
+		$r: RuleTrigger(status == RuleTriggerStatus.RUNNING, $tickTocker.now > expirationTime)
+	then
+		modify($r) {
+            setStatus(RuleTriggerStatus.TIMEOUT)
         }
 	end
 

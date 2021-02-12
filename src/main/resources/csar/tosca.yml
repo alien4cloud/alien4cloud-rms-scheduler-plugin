@@ -65,6 +65,11 @@ policy_types:
         type: boolean
         default: true
         required: true
+      cancel_on_timeout:
+        description: Defines if we must cancel a running workflow if time window elapsed.
+        type: boolean
+        default: false
+        required: true
       conditions:
         description: |
           List of conditions that trigger rule.

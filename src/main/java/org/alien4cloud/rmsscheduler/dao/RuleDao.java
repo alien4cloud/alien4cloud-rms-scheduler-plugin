@@ -5,22 +5,21 @@ import alien4cloud.exception.IndexingServiceException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import lombok.extern.slf4j.Slf4j;
 import org.alien4cloud.rmsscheduler.model.Rule;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.beans.IntrospectionException;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * TODO: Should store handled rules in persistence in order to manage recovery
  */
 @Component
+@Slf4j
 public class RuleDao extends ESGenericSearchDAO {
 
     private Set<Rule> store = Sets.newConcurrentHashSet();
@@ -68,10 +67,15 @@ public class RuleDao extends ESGenericSearchDAO {
         while (stored.hasNext()) {
             Rule rule = stored.next();
             if (deploymentId.equals(rule.getDeploymentId()) && rule.isHandled()) {
+                log.debug("Removing Rule from rule store : " + rule);
                 stored.remove();
                 this.delete(Rule.class, rule.getId());
             }
         }
+    }
+
+    public Optional<Rule> getHandledRule(final String ruleId) {
+        return this.store.stream().filter(rule -> rule.getId().equals(ruleId) && rule.isHandled()).findFirst();
     }
 
     public Collection<Rule> listHandledRules() {

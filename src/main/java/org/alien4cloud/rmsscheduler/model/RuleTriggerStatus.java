@@ -9,9 +9,11 @@ public enum RuleTriggerStatus {
     /** The action is executing. */
     RUNNING,
     /** The action has be executed with success. */
-    SUCCESS,
+    DONE,
     /** The action has finished with error. */
     ERROR,
+    /** The rule was running, but the end of time window is reached. */
+    TIMEOUT,
     /** The rule has not been triggered before it's expirationDate, it's cancelled. */
     DROPPED
 }

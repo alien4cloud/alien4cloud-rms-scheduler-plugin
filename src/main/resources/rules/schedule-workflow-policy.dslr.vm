@@ -51,7 +51,7 @@ rule "$rule.id: Loop rule"
     // "retryOnError" value
     enabled $rule.loop
 	when
-        A trigger in SUCCESS exists with id $rule.id
+        A trigger in DONE exists with id $rule.id
 	then
 	    Log "---- Re-schedule de $rule.id -----"
 		Reschedule the trigger in $rule.rescheduleDelay

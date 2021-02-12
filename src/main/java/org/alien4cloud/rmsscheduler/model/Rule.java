@@ -5,8 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.elasticsearch.annotation.ESObject;
-import org.elasticsearch.annotation.NumberField;
-import org.elasticsearch.mapping.IndexType;
+import org.elasticsearch.annotation.Id;
 
 /**
  * A rule is the Java representation of a Drools rule. It's related to an environment.
@@ -20,6 +19,7 @@ import org.elasticsearch.mapping.IndexType;
 @NoArgsConstructor
 public class Rule {
 
+    @Id
     private String id;
     
     private String environmentId;
@@ -87,6 +87,11 @@ public class Rule {
      * Defines if only one action should be executed at a given time (no overlap when true).
      */
     private boolean onlyOneRunning;
+
+    /**
+     * Defines if we must cancel a running workflow if time window elapsed.
+     */
+    private boolean cancelOnTimeout;
 
     /*
      * A rule is handled when the corresponding session has been created (ie. the deployment has been DEPLOYED)

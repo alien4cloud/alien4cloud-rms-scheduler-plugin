@@ -90,7 +90,12 @@ conditions:
 workflow_name: run
 ```
 
-# 
+## Cancellations
+
+When a scheduled workflow is cancelled, all subsequent executions (linked to a given trigger) will not be triggered. But the next trigger will be scheduled.
+
+The policy option `cancel_on_timeout` will cancel an execution when it's running but the time window has expired.
+
 
 
 # TODO

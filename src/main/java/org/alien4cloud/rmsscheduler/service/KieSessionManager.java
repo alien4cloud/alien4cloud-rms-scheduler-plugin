@@ -1,15 +1,11 @@
 package org.alien4cloud.rmsscheduler.service;
 
 import alien4cloud.deployment.DeploymentService;
-import alien4cloud.deployment.WorkflowExecutionService;
 import alien4cloud.events.AlienEvent;
 import alien4cloud.events.DeploymentCreatedEvent;
 import alien4cloud.events.DeploymentUndeployedEvent;
 import alien4cloud.model.deployment.Deployment;
-import alien4cloud.paas.IPaaSCallback;
-import alien4cloud.rest.application.model.LaunchWorkflowRequest;
 import alien4cloud.tosca.serializer.VelocityUtil;
-import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.alien4cloud.rmsscheduler.RMSPluginConfiguration;
 import org.alien4cloud.rmsscheduler.dao.RuleDao;
@@ -20,9 +16,7 @@ import org.alien4cloud.rmsscheduler.model.RuleTrigger;
 import org.alien4cloud.rmsscheduler.model.RuleTriggerStatus;
 import org.alien4cloud.rmsscheduler.model.TickTocker;
 import org.alien4cloud.rmsscheduler.utils.KieUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.lucene.util.NamedThreadFactory;
-import org.jbpm.process.core.timer.impl.QuartzSchedulerService;
 import org.kie.api.KieBase;
 import org.kie.api.builder.Message;
 import org.kie.api.builder.Results;
@@ -33,7 +27,6 @@ import org.kie.api.event.rule.ObjectInsertedEvent;
 import org.kie.api.event.rule.ObjectUpdatedEvent;
 import org.kie.api.io.ResourceType;
 import org.kie.api.runtime.KieSession;
-import org.kie.api.runtime.rule.FactHandle;
 import org.kie.internal.utils.KieHelper;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Service;
@@ -76,9 +69,6 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
     @Resource
     private RuleDao ruleDao;
 
-    @Inject
-    private WorkflowExecutionService workflowExecutionService;
-
     @Resource
     private RMSPluginConfiguration pluginConfiguration;
 
@@ -86,6 +76,11 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
      * Executor service in charge of regularly fire rules for existing sessions.
      */
     private ScheduledExecutorService schedulerService;
+
+    @Inject
+    private CancelWorkflowAction cancelWorkflowAction;
+    @Inject
+    private LaunchWorkflowAction launchWorkflowAction;
 
     @PostConstruct
     public void init() throws IOException {
@@ -120,7 +115,6 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
                 });
             }
         },0, pluginConfiguration.getHeartbeatPeriod(), TimeUnit.SECONDS);
-        // TODO: this period should be configurable
     }
 
     /**
@@ -134,6 +128,7 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
         initRulesPerDeployment.forEach((deploymentId, rules) -> {
             log.info("Init KIE session for deployment {} using {} rules", deploymentId, rules.size());
             initKieSession(deploymentId, rules);
+            ruleDao.create(deploymentId, rules);
         });
     }
 
@@ -191,39 +186,24 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
             log.debug("RuleTrigger updated in rule {}: {}", (event.getRule() == null) ? "Unknown" : event.getRule().getName(), o.toString());
 
             final RuleTrigger r = (RuleTrigger)o;
-            if (r.getStatus() == RuleTriggerStatus.TRIGGERED) {
-                onRuleTriggered(r, event.getFactHandle());
+            SessionHandler sessionHandler = sessionDao.get(r.getDeploymentId());
+            if (sessionHandler == null) {
+                log.debug("No session found for {}", r);
+                return;
             }
-        }
-    }
 
-    private void onRuleTriggered(RuleTrigger ruleTrigger, FactHandle factHandle) {
-        SessionHandler sessionHandler = sessionDao.get(ruleTrigger.getDeploymentId());
-        if (sessionHandler == null) {
-            log.debug("No session found for {}", ruleTrigger);
-            return;
-        }
-
-        LaunchWorkflowRequest request = new LaunchWorkflowRequest();
-        Map<String, Object> params = Maps.newHashMap();
-
-        log.info("Launching worflow for {}", ruleTrigger);
-        try {
-            workflowExecutionService.launchWorkflow(request, ruleTrigger.getEnvironmentId(), ruleTrigger.getAction(), params,
-                    new IPaaSCallback<String>() {
-                        @Override
-                        public void onSuccess(String executionId) {
-                            ruleTrigger.setExecutionId(executionId);
-                            KieUtils.updateRuleTrigger(sessionHandler.getSession(), ruleTrigger, factHandle, RuleTriggerStatus.RUNNING);
-                        }
-
-                        @Override
-                        public void onFailure(Throwable e) {
-                            KieUtils.updateRuleTrigger(sessionHandler.getSession(), ruleTrigger, factHandle, RuleTriggerStatus.ERROR);
-                        }
-                    });
-        } catch (Exception e) {
-            KieUtils.updateRuleTrigger(sessionHandler.getSession(), ruleTrigger, factHandle, RuleTriggerStatus.ERROR);
+            if (r.getStatus() == RuleTriggerStatus.TRIGGERED) {
+                log.info("Launching worflow for {}", r);
+                launchWorkflowAction.execute(r, sessionHandler, event.getFactHandle());
+            } else if (r.getStatus() == RuleTriggerStatus.TIMEOUT) {
+                // Cancel running execution only if option cancel_on_timeout is set
+                Optional<Rule> rule = ruleDao.getHandledRule(r.getRuleId());
+                log.debug("Rule found: {}", rule);
+                if (rule.isPresent() && rule.get().isCancelOnTimeout()) {
+                    log.info("Cancel execution {}", r.getExecutionId());
+                    cancelWorkflowAction.execute(r, sessionHandler, event.getFactHandle());
+                }
+            }
         }
     }
 
@@ -259,7 +239,7 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
             sessionHandler.getSession().dispose();
             sessionDao.delete(sessionHandler);
             Deployment deployment = deploymentService.get(deploymentUndeployedEvent.getDeploymentId());
-            ruleDao.deleteHandledRules(deployment.getEnvironmentId());
+            ruleDao.deleteHandledRules(deploymentUndeployedEvent.getDeploymentId());
         }
     }
 

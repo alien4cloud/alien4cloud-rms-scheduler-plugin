@@ -2,10 +2,7 @@ package org.alien4cloud.rmsscheduler.service;
 
 import alien4cloud.paas.IPaasEventListener;
 import alien4cloud.paas.IPaasEventService;
-import alien4cloud.paas.model.AbstractMonitorEvent;
-import alien4cloud.paas.model.AbstractPaaSWorkflowMonitorEvent;
-import alien4cloud.paas.model.PaaSWorkflowFailedEvent;
-import alien4cloud.paas.model.PaaSWorkflowSucceededEvent;
+import alien4cloud.paas.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.alien4cloud.rmsscheduler.dao.SessionDao;
 import org.alien4cloud.rmsscheduler.dao.SessionHandler;
@@ -59,9 +56,12 @@ public class WorkflowListener {
     // TODO: Should we manage CANCELLED workflows ?
     private void handleEvent(AbstractPaaSWorkflowMonitorEvent event) {
         if (event instanceof PaaSWorkflowSucceededEvent) {
-            updateFact(event, RuleTriggerStatus.SUCCESS);
+            updateFact(event, RuleTriggerStatus.DONE);
         } else if (event instanceof PaaSWorkflowFailedEvent) {
             updateFact(event, RuleTriggerStatus.ERROR);
+        } else if (event instanceof PaaSWorkflowCancelledEvent) {
+            // we drop the rule (no retry, no loop)
+            updateFact(event, RuleTriggerStatus.DROPPED);
         }
     }
 
@@ -85,6 +85,7 @@ public class WorkflowListener {
         }
         factHandles.forEach(factHandle -> {
             RuleTrigger ruleTrigger = (RuleTrigger)sessionHandler.getSession().getObject(factHandle);
+            ruleTrigger.setExecutionId(null);
             KieUtils.updateRuleTrigger(sessionHandler.getSession(), ruleTrigger, factHandle, ruleTriggerStatus);
         });
     }

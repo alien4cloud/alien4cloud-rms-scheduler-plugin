@@ -157,7 +157,7 @@ public class POCControler {
                                     if (r.getRuleId().endsWith("Err")) {
                                         r.setStatus(RuleTriggerStatus.ERROR);
                                     } else {
-                                        r.setStatus(RuleTriggerStatus.SUCCESS);
+                                        r.setStatus(RuleTriggerStatus.DONE);
                                     }
                                     kieSession.update(event.getFactHandle(), r);
                                 } catch (InterruptedException e) {

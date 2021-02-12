@@ -1,0 +1,220 @@
+tosca_definitions_version: alien_dsl_3_0_0
+
+metadata:
+  template_name: TestRMSScheduler
+  template_version: 3.0.0-SNAPSHOT
+  template_author: admin
+
+description: ""
+
+imports:
+  - tosca-normative-types:1.0.0-ALIEN20
+  - org.alien4cloud.mock.bash:2.2.0-SNAPSHOT
+  - org.alien4cloud.mock.pub:2.2.0-SNAPSHOT
+  - alien-base-types:3.0.0
+  - org.alien4cloud.rmsscheduling:3.0.0
+
+topology_template:
+  node_templates:
+    MiniBashMock:
+      metadata:
+        a4c_edit_x: 19
+        a4c_edit_y: "-5"
+      type: org.alien4cloud.mock.bash.nodes.MiniBashMock
+      properties:
+        duration: 3
+        variation: 20
+        log_length: 2000
+    MiniBashFailFastMock:
+      metadata:
+        a4c_edit_x: 179
+        a4c_edit_y: 73
+      type: org.alien4cloud.mock.bash.nodes.MiniBashFailFastMock
+      properties:
+        duration: 3
+        variation: 20
+        log_length: 2000
+  policies:
+    - LoopSample:
+        type: org.alien4cloud.rmsscheduling.policies.RMSScheduleWorkflowPolicy
+        targets: [  ]
+        properties:
+          duration: 3m
+          timer_type: cron
+          retry_on_error: false
+          loop: true
+          reschedule_delay: 45s
+          only_one_running: true
+          conditions:
+            - "Average value for metric \"ES_Disk_Free\" during last 10m is > 10000"
+          cron_expression: "0 0/5 * * * ?"
+          workflow_name: run
+    - FailNoRetry:
+        type: org.alien4cloud.rmsscheduling.policies.RMSScheduleWorkflowPolicy
+        targets: [  ]
+        properties:
+          duration: 60s
+          timer_type: cron
+          retry_on_error: false
+          loop: false
+          reschedule_delay: 10s
+          only_one_running: true
+          cron_expression: "0 6/7 * * * ?"
+          workflow_name: fail
+    - FailRetry:
+        type: org.alien4cloud.rmsscheduling.policies.RMSScheduleWorkflowPolicy
+        targets: [  ]
+        properties:
+          duration: 2m
+          timer_type: cron
+          retry_on_error: true
+          loop: false
+          reschedule_delay: 30s
+          only_one_running: true
+          cron_expression: "0 0/15 * * * ?"
+          workflow_name: fail
+  workflows:
+    install:
+      steps:
+        MiniBashMock_starting:
+          target: MiniBashMock
+          activities:
+            - set_state: starting
+          on_success:
+            - MiniBashMock_started
+        MiniBashMock_initial:
+          target: MiniBashMock
+          activities:
+            - set_state: initial
+          on_success:
+            - MiniBashMock_starting
+        MiniBashMock_started:
+          target: MiniBashMock
+          activities:
+            - set_state: started
+        MiniBashFailFastMock_initial:
+          target: MiniBashFailFastMock
+          activities:
+            - set_state: initial
+          on_success:
+            - MiniBashFailFastMock_creating
+        MiniBashFailFastMock_creating:
+          target: MiniBashFailFastMock
+          activities:
+            - set_state: creating
+          on_success:
+            - MiniBashFailFastMock_created
+        MiniBashFailFastMock_created:
+          target: MiniBashFailFastMock
+          activities:
+            - set_state: created
+          on_success:
+            - MiniBashFailFastMock_configuring
+        MiniBashFailFastMock_configuring:
+          target: MiniBashFailFastMock
+          activities:
+            - set_state: configuring
+          on_success:
+            - MiniBashFailFastMock_configured
+        MiniBashFailFastMock_configured:
+          target: MiniBashFailFastMock
+          activities:
+            - set_state: configured
+          on_success:
+            - MiniBashFailFastMock_starting
+        MiniBashFailFastMock_starting:
+          target: MiniBashFailFastMock
+          activities:
+            - set_state: starting
+          on_success:
+            - MiniBashFailFastMock_started
+        MiniBashFailFastMock_started:
+          target: MiniBashFailFastMock
+          activities:
+            - set_state: started
+    uninstall:
+      steps:
+        MiniBashMock_deleted:
+          target: MiniBashMock
+          activities:
+            - set_state: deleted
+        MiniBashMock_stopping:
+          target: MiniBashMock
+          activities:
+            - set_state: stopping
+          on_success:
+            - MiniBashMock_stopped
+        MiniBashMock_stopped:
+          target: MiniBashMock
+          activities:
+            - set_state: stopped
+          on_success:
+            - MiniBashMock_deleting
+        MiniBashMock_deleting:
+          target: MiniBashMock
+          activities:
+            - set_state: deleting
+          on_success:
+            - MiniBashMock_deleted
+        MiniBashFailFastMock_deleting:
+          target: MiniBashFailFastMock
+          activities:
+            - set_state: deleting
+          on_success:
+            - MiniBashFailFastMock_deleted
+        MiniBashFailFastMock_deleted:
+          target: MiniBashFailFastMock
+          activities:
+            - set_state: deleted
+    run:
+      steps:
+        MiniBashMock_start:
+          target: MiniBashMock
+          activities:
+            - call_operation: Standard.start
+        MiniBashFailFastMock_submitting:
+          target: MiniBashFailFastMock
+          activities:
+            - set_state: submitting
+          on_success:
+            - MiniBashFailFastMock_submit
+        MiniBashFailFastMock_submitted:
+          target: MiniBashFailFastMock
+          activities:
+            - set_state: submitted
+          on_success:
+            - MiniBashFailFastMock_executing
+        MiniBashFailFastMock_executing:
+          target: MiniBashFailFastMock
+          activities:
+            - set_state: executing
+          on_success:
+            - MiniBashFailFastMock_run
+        MiniBashFailFastMock_executed:
+          target: MiniBashFailFastMock
+          activities:
+            - set_state: executed
+        MiniBashFailFastMock_submit:
+          target: MiniBashFailFastMock
+          activities:
+            - call_operation: tosca.interfaces.node.lifecycle.Runnable.submit
+          on_success:
+            - MiniBashFailFastMock_submitted
+        MiniBashFailFastMock_run:
+          target: MiniBashFailFastMock
+          activities:
+            - call_operation: tosca.interfaces.node.lifecycle.Runnable.run
+          on_success:
+            - MiniBashFailFastMock_executed
+    fail:
+      steps:
+        MiniBashFailFastMock_start:
+          target: MiniBashFailFastMock
+          activities:
+            - call_operation: Standard.start
+        MiniBashMock_start:
+          target: MiniBashMock
+          activities:
+            - call_operation: Standard.start
+          on_success:
+            - MiniBashFailFastMock_start

@@ -1,7 +1,14 @@
-# alien4cloud-rms-scheduler-plugin
+# RMS Scheduler plugin
 A rule based scheduler embedding drools.
 
-A runtime policy of `RMSScheduleWorkflowPolicy` type is defined in the embeded [csar](src/main/resources/csar/tosca.yml).
+In few words:
+- A runtime policy `RMSScheduleWorkflowPolicy` is defined in the embedded [csar](src/main/resources/csar/tosca.yml).
+- This policy let you define a schedule time window. Inside this time window, you workflow can be launched if it's conditions are met.
+- Conditions are expressed using a DSL that admin can enrich.
+- You can retry if a workflow fail.
+- You can loop a successful job during the time window.
+- You can define the delay between retries or repeat.
+- You can define the maximum of triggers inside the time window.
 
 
 # Config
@@ -25,9 +32,12 @@ alien4cloud-rms-scheduler-plugin:
 # How-to
 
 Add the **RMS Scheduler Modifier** to your location at **post-policy-match** phase.
-Create a topology using simple mocks and add one or several **RMSScheduleWorkflowPolicy** to your topology.
+Create a topology using simple mocks and add one or several **RMSScheduleWorkflowPolicy** to your topology (or use [this one](src/test/resources/csar/sample.yml)).
 
-The following policy config example will trigger the run workflow (you need a run workflow !) each hour at 0 and 30 minutes with a TTL of 10 minutes (if workflow fails, it will be retried during 10 minutes) :
+The following policy config example will :
+- trigger the run workflow (you need a run workflow !) each hour at 0 and 30 minutes.
+- if workflow fails, it will be retried maximum 2 times (during the window time of 10 minutes).
+- each retry will be delayed of 1 minute
 
 Property name | value
 ------------ | -------------
@@ -36,6 +46,8 @@ timer_type | cron
 workflow_name | run
 duration | 10m
 retry_on_error | true
+max_run | 3
+reschedule_delay | 1m
 
 This other example will trigger run workflow after a 10 minutes delay (after the deployment, or system start), if conditions are satisfied (with temporal window of 2 minutes) :
 
@@ -91,14 +103,3 @@ workflow_name: run
 ## Ideas
 
 Ability to cancel a workflow when it's expiration occurs ?
-How-to retry after a given period in case of error ?
-Number of retry ? -1 = infinite
-
-Should be possible to launch a workflow during the time window even if SUCESS
-
-reschedule_delay
-    int expression
-    the delay beetween reschedules (after error or if looping)
-loop
-    boolean
-    if true will loop the action during time window

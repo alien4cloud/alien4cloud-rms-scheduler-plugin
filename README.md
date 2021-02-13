@@ -103,6 +103,8 @@ only_one_running: true
 
 ![No overlap](doc/images/NoOverlap.png "No overlap")
 
+The second run is launched after the first terminates (without delay).
+
 You may want to retry on error :
 
 ```
@@ -187,6 +189,7 @@ The policy option `cancel_on_timeout` will cancel an execution when it's running
 
 # TODO
 
+- Validate the whole rule (including timer expressions)
 - DSL editor
 - Manage deployment update
 - Manage downtime ? 

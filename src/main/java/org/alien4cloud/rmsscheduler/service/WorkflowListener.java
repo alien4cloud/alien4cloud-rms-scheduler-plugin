@@ -4,11 +4,13 @@ import alien4cloud.paas.IPaasEventListener;
 import alien4cloud.paas.IPaasEventService;
 import alien4cloud.paas.model.*;
 import lombok.extern.slf4j.Slf4j;
+import org.alien4cloud.rmsscheduler.dao.RuleDao;
 import org.alien4cloud.rmsscheduler.dao.SessionDao;
 import org.alien4cloud.rmsscheduler.dao.SessionHandler;
 import org.alien4cloud.rmsscheduler.model.RuleTrigger;
 import org.alien4cloud.rmsscheduler.model.RuleTriggerStatus;
 import org.alien4cloud.rmsscheduler.utils.KieUtils;
+import org.alien4cloud.tosca.normative.constants.NormativeWorkflowNameConstants;
 import org.kie.api.runtime.rule.FactHandle;
 import org.springframework.stereotype.Component;
 
@@ -30,6 +32,12 @@ public class WorkflowListener {
 
     @Resource
     private SessionDao sessionDao;
+
+    @Resource
+    private KieSessionManager kieSessionManager;
+
+    @Resource
+    private RuleDao ruleDao;
 
     @PostConstruct
     public void init() {
@@ -53,15 +61,26 @@ public class WorkflowListener {
         }
     };
 
-    // TODO: Should we manage CANCELLED workflows ?
     private void handleEvent(AbstractPaaSWorkflowMonitorEvent event) {
         if (event instanceof PaaSWorkflowSucceededEvent) {
-            updateFact(event, RuleTriggerStatus.DONE);
+            if (event.getWorkflowId().equals(NormativeWorkflowNameConstants.INSTALL)) {
+                kieSessionManager.initKieSession(event.getDeploymentId());
+            } else {
+                updateFact(event, RuleTriggerStatus.DONE);
+            }
         } else if (event instanceof PaaSWorkflowFailedEvent) {
-            updateFact(event, RuleTriggerStatus.ERROR);
+            if (event.getWorkflowId().equals(NormativeWorkflowNameConstants.INSTALL)) {
+                ruleDao.deleteHandledRules(event.getDeploymentId());
+            } else {
+                updateFact(event, RuleTriggerStatus.ERROR);
+            }
         } else if (event instanceof PaaSWorkflowCancelledEvent) {
-            // we drop the rule (no retry, no loop)
-            updateFact(event, RuleTriggerStatus.DROPPED);
+            if (event.getWorkflowId().equals(NormativeWorkflowNameConstants.INSTALL)) {
+                ruleDao.deleteHandledRules(event.getDeploymentId());
+            } else {
+                // we drop the rule (no retry, no loop)
+                updateFact(event, RuleTriggerStatus.DROPPED);
+            }
         }
     }
 

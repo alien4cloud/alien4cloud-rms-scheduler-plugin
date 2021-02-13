@@ -46,8 +46,8 @@ import java.util.stream.Collectors;
  * In charge of :
  * <ul>
  *     <li>Creating and managing KIE sessions (1 per deployment).</li>
- *     <li>React to fact changes.</li>
- *     <li>Regularly fire rules onto KIE sessions.</li>
+ *     <li>React to fact changes, and eventually do something (launch wf, cancel execution ...).</li>
+ *     <li>Regularly fire rules onto KIE sessions (heartbeat).</li>
  * </ul>
  */
 @Service
@@ -222,12 +222,20 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
         }
     }
 
+    /**
+     * The deployment has been created, just handle rules prepared by modifier init a KIE session.
+     */
     private void onDeploymentCreatedEvent(DeploymentCreatedEvent deploymentCreatedEvent) {
         log.debug("Deployment created {}", deploymentCreatedEvent.getDeploymentId());
         Deployment deployment = deploymentService.get(deploymentCreatedEvent.getDeploymentId());
         Collection<Rule> rules = this.ruleDao.handleRules(deployment.getEnvironmentId(), deployment.getId());
+    }
+
+    public void initKieSession(String deploymentId) {
+        log.debug("Init KIE session for deployment {}", deploymentId);
+        Collection<Rule> rules = this.ruleDao.listHandledRules(deploymentId);
         if (!rules.isEmpty()) {
-            initKieSession(deploymentCreatedEvent.getDeploymentId(), rules);
+            initKieSession(deploymentId, rules);
         }
     }
 

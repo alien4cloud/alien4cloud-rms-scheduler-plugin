@@ -57,7 +57,7 @@ public class RuleDao extends ESGenericSearchDAO {
             rule.setHandled(true);
             rule.setDeploymentId(deploymentId);
         });
-        // TODO: serialize handled rules
+        // serialize handled rules
         this.save(rules.toArray());
         return rules;
     }
@@ -80,6 +80,12 @@ public class RuleDao extends ESGenericSearchDAO {
 
     public Collection<Rule> listHandledRules() {
         Map<String, String[]> filters = Maps.newHashMap();
+        return Lists.newArrayList(this.find(Rule.class, filters, Integer.MAX_VALUE).getData());
+    }
+
+    public Collection<Rule> listHandledRules(String deploymentId) {
+        Map<String, String[]> filters = Maps.newHashMap();
+        filters.put("deploymentId", new String[]{deploymentId});
         return Lists.newArrayList(this.find(Rule.class, filters, Integer.MAX_VALUE).getData());
     }
 

@@ -10,11 +10,9 @@ import org.alien4cloud.rmsscheduler.model.RuleTrigger;
 import org.alien4cloud.rmsscheduler.model.RuleTriggerStatus;
 import org.alien4cloud.rmsscheduler.utils.KieUtils;
 import org.kie.api.runtime.rule.FactHandle;
-import org.slf4j.Logger;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import javax.inject.Inject;
 import java.util.Map;
 
 @Slf4j

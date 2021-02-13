@@ -8,18 +8,11 @@ import alien4cloud.orchestrators.plugin.IOrchestratorPlugin;
 import alien4cloud.paas.IPaaSCallback;
 import alien4cloud.paas.OrchestratorPluginService;
 import alien4cloud.paas.model.PaaSDeploymentContext;
-import alien4cloud.rest.deployment.ExecutionCancellationRequest;
-import alien4cloud.rest.deployment.ExecutionController;
-import alien4cloud.rest.model.RestError;
-import alien4cloud.rest.model.RestErrorCode;
-import alien4cloud.rest.model.RestResponse;
-import alien4cloud.rest.model.RestResponseBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.alien4cloud.rmsscheduler.dao.SessionHandler;
 import org.alien4cloud.rmsscheduler.model.RuleTrigger;
 import org.kie.api.runtime.rule.FactHandle;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.async.DeferredResult;
 
 import javax.annotation.Resource;
 

@@ -1,15 +1,22 @@
 # RMS Scheduler plugin
 A rule based scheduler embedding drools.
 
-In few words:
+# What can this plugin do for you ?
+
+Using this plugin, you will be able to define runtime schedule policies onto your topology. 
+Final goal is to launch workflows during scheduled time windows, and eventually condition these launches using complex event processing rules.
+
+How it works in few words:
 - A runtime policy `RMSScheduleWorkflowPolicy` is defined in the embedded [csar](src/main/resources/csar/tosca.yml).
 - This policy let you define a schedule time window. Inside this time window, you workflow can be launched if it's conditions are met.
 - Conditions are expressed using a DSL that admin can enrich.
+
+Without conditions, it will act as a runtime scheduler that will just schedule workflows with smart features :
 - You can retry if a workflow fail.
 - You can loop a successful job during the time window.
 - You can define the delay between retries or repeat.
 - You can define the maximum of triggers inside the time window.
-
+- You can cancel the execution when time window expires in order to ensure no activity outside defined periods.
 
 # Config
 
@@ -38,6 +45,8 @@ The following policy config example will :
 - trigger the run workflow (you need a run workflow !) each hour at 0 and 30 minutes.
 - if workflow fails, it will be retried maximum 2 times (during the window time of 10 minutes).
 - each retry will be delayed of 1 minute
+
+## Examples
 
 Property name | value
 ------------ | -------------
@@ -73,7 +82,22 @@ Events are timestamped and have a TTL of 5m (TODO: make plugin configurable)
 
 Another example condition could also be `Average value for metric "ES_Disk_Free" during last 10m is > 10000`.
 
-## Illustrations
+In the example policy configuration below, if conditions are met, the policy will loop during 3m, with a delay between each triggers of 45s. 
+ :
+
+```
+timer_type: cron
+cron_expression: "0 0/5 * * * ?"
+duration: 3m
+loop: true
+delay: 45s
+only_one_running: true
+conditions: 
+ - "Average value for metric \"ES_Disk_Free\" during last 10m is > 10000"
+workflow_name: run
+```
+
+## Scheduler features illustrations
 
 `cron_expression` and `duration` let you define the schedule time window :
 
@@ -164,28 +188,7 @@ delay: 2s
 
 ![Manual Cancellation](doc/images/ManualCancellation.png "Manual Cancellation")
 
-In the example policy configuration below, if conditions are met, the policy will loop during 3m, with a delay between each triggers of 45s. 
- :
-
-```
-timer_type: cron
-cron_expression: "0 0/5 * * * ?"
-duration: 3m
-loop: true
-delay: 45s
-only_one_running: true
-conditions: 
- - "Average value for metric \"ES_Disk_Free\" during last 10m is > 10000"
-workflow_name: run
-```
-
-## Cancellations
-
 When a scheduled workflow is cancelled, all subsequent executions (linked to a given trigger) will not be triggered. But the next trigger will be scheduled.
-
-The policy option `cancel_on_timeout` will cancel an execution when it's running but the time window has expired.
-
-
 
 # TODO
 
@@ -197,4 +200,4 @@ The policy option `cancel_on_timeout` will cancel an execution when it's running
 
 ## Ideas
 
-Ability to cancel a workflow when it's expiration occurs ?
+

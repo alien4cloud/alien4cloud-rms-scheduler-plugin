@@ -62,7 +62,13 @@ public class WorkflowListener {
     };
 
     private void handleEvent(AbstractPaaSWorkflowMonitorEvent event) {
-        if (event instanceof PaaSWorkflowSucceededEvent) {
+        if (event instanceof PaaSWorkflowStartedEvent) {
+            if (event.getWorkflowId().equals(NormativeWorkflowNameConstants.UNINSTALL)) {
+                // TODO: stop the KIE session
+            } else {
+                // TODO: make rule trigger has HANDLED ?
+            }
+        } else if (event instanceof PaaSWorkflowSucceededEvent) {
             if (event.getWorkflowId().equals(NormativeWorkflowNameConstants.INSTALL)) {
                 kieSessionManager.initKieSession(event.getDeploymentId());
             } else {

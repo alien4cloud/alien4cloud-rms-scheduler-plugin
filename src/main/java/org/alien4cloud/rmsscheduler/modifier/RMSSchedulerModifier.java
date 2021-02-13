@@ -4,7 +4,6 @@ import alien4cloud.paas.wf.validation.WorkflowValidator;
 import alien4cloud.tosca.context.ToscaContextual;
 import alien4cloud.utils.PropertyUtil;
 import com.google.common.collect.Sets;
-import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 import org.alien4cloud.alm.deployment.configuration.flow.FlowExecutionContext;
 import org.alien4cloud.alm.deployment.configuration.flow.TopologyModifierSupport;
@@ -20,7 +19,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.Set;
-import java.util.logging.Level;
 
 /**
  * This modifier is in charge of detecting policies of type RMS, validate them and prepare rules for executions.
@@ -67,7 +65,7 @@ public class RMSSchedulerModifier extends TopologyModifierSupport {
             rule.setOnlyOneRunning(Boolean.valueOf(PropertyUtil.getScalarValue(policy.getProperties().get("only_one_running"))));
             rule.setLoop(Boolean.valueOf(PropertyUtil.getScalarValue(policy.getProperties().get("loop"))));
             rule.setDuration(PropertyUtil.getScalarValue(policy.getProperties().get("duration")));
-            rule.setRescheduleDelay(PropertyUtil.getScalarValue(policy.getProperties().get("reschedule_delay")));
+            rule.setDelay(PropertyUtil.getScalarValue(policy.getProperties().get("delay")));
             rule.setMaxRun(Integer.parseInt(PropertyUtil.getScalarValue(policy.getProperties().get("max_run"))));
             rule.setCancelOnTimeout(Boolean.valueOf(PropertyUtil.getScalarValue(policy.getProperties().get("cancel_on_timeout"))));
             rule.setAction(PropertyUtil.getScalarValue(policy.getProperties().get("workflow_name")));

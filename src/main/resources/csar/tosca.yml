@@ -50,7 +50,7 @@ policy_types:
         type: boolean
         default: false
         required: true
-      reschedule_delay:
+      delay:
         description: The delay beetween reschedules (after error or while looping), ex 30s or 10m or 2h.
         type: string
         default: 10s

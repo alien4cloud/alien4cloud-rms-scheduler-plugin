@@ -43,7 +43,7 @@ topology_template:
           timer_type: cron
           retry_on_error: false
           loop: true
-          reschedule_delay: 45s
+          delay: 45s
           only_one_running: true
           conditions:
             - "Average value for metric \"ES_Disk_Free\" during last 10m is > 10000"
@@ -57,7 +57,7 @@ topology_template:
           timer_type: cron
           retry_on_error: false
           loop: false
-          reschedule_delay: 10s
+          delay: 10s
           only_one_running: true
           cron_expression: "0 6/7 * * * ?"
           workflow_name: fail
@@ -69,7 +69,7 @@ topology_template:
           timer_type: cron
           retry_on_error: true
           loop: false
-          reschedule_delay: 30s
+          delay: 30s
           only_one_running: true
           cron_expression: "0 0/15 * * * ?"
           workflow_name: fail

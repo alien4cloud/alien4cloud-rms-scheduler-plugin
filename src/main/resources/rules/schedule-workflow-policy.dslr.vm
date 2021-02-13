@@ -43,7 +43,7 @@ rule "$rule.id: Retry rule"
         A trigger in ERROR exists with id $rule.id
 	then
 	    Log "---- Re-schedule de $rule.id -----"
-		Reschedule the trigger in $rule.rescheduleDelay
+		Reschedule the trigger in $rule.delay
 	end
 
 rule "$rule.id: Loop rule"
@@ -54,5 +54,5 @@ rule "$rule.id: Loop rule"
         A trigger in DONE exists with id $rule.id
 	then
 	    Log "---- Re-schedule de $rule.id -----"
-		Reschedule the trigger in $rule.rescheduleDelay
+		Reschedule the trigger in $rule.delay
 	end

@@ -6,7 +6,7 @@
 [when]No running execution with id {ruleId}=not RuleTrigger(ruleId == "{ruleId}", status == RuleTriggerStatus.RUNNING)
 [when]No scheduled trigger exists with id {ruleId}=not RuleTrigger(ruleId == "{ruleId}", status == RuleTriggerStatus.SCHEDULED)
 [then]Fire the trigger=r.activate();update(r);
-[then]Reschedule the trigger in {rescheduleDelay}=r.reschedule("{rescheduleDelay}");update(r);
+[then]Reschedule the trigger in {delay}=r.reschedule("{delay}");update(r);
 [when]I've got a recent value for metric "{metric_label}"=MetricEvent(label == "{metric_label}")
 [when]Last known metric "{metric_label}" is {operator} {metric_value}=
 Number( doubleValue {operator} {metric_value} ) from accumulate

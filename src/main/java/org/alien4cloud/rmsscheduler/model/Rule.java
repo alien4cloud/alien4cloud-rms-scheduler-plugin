@@ -76,7 +76,7 @@ public class Rule {
     /**
      * The delay beetween reschedules (after error or if looping), ex 30s or 10m or 2h.
      */
-    private String rescheduleDelay;
+    private String delay;
 
     /**
      * The maximum the action will be repeated (in case of ERROR and retry_on_error or loop mode).

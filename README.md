@@ -47,7 +47,7 @@ workflow_name | run
 duration | 10m
 retry_on_error | true
 max_run | 3
-reschedule_delay | 1m
+delay | 1m
 
 This other example will trigger run workflow after a 10 minutes delay (after the deployment, or system start), if conditions are satisfied (with temporal window of 2 minutes) :
 
@@ -73,7 +73,94 @@ Events are timestamped and have a TTL of 5m (TODO: make plugin configurable)
 
 Another example condition could also be `Average value for metric "ES_Disk_Free" during last 10m is > 10000`.
 
-## Loops
+## Illustrations
+
+`cron_expression` and `duration` let you define the schedule time window :
+
+```
+cron_expression: 0 0/10 * * * ?
+duration: 7m
+```
+
+![Time window definition](doc/images/TimeWindowDefinition.png "Time window definition")
+
+By default, runs can overlap (if the run duration exceed the time window) :
+
+```
+cron_expression: 0 0/10 * * * ?
+duration: 7m
+only_one_running: false (default)
+```
+
+![Overlap](doc/images/Overlap.png "Overlap")
+
+You can change this behavior by using `only_one_running` :
+```
+cron_expression: 0 0/10 * * * ?
+duration: 7m
+only_one_running: true
+```
+
+![No overlap](doc/images/NoOverlap.png "No overlap")
+
+You may want to retry on error :
+
+```
+cron_expression: 0 0/10 * * * ?
+duration: 7m
+retry_on_error: true
+delay: 2s
+```
+
+![Retry on error](doc/images/RetryOnError.png "Retry on error")
+
+You may want to `loop` the execution even if run succeed :
+
+```
+cron_expression: 0 0/10 * * * ?
+duration: 7m
+loop: true
+delay: 2s
+```
+
+![Loop](doc/images/Loop.png "Loop")
+
+You can limit the number of runs using `max_run` :
+
+```
+cron_expression: 0 0/10 * * * ?
+duration: 7m
+retry_on_error: true
+loop: true
+max_run: 2
+delay: 2s
+```
+
+![Max run](doc/images/MaxRun.png "Max run")
+
+Execution can be cancelled by the rule itself if time window expires :
+
+```
+cron_expression: 0 0/10 * * * ?
+duration: 7m
+loop: true
+retry_on_error: true
+delay: 2s
+cancel_on_timeout: true
+```
+
+![Cancel on timeout](doc/images/CancelOnTimeout.png "Cancel on timeout")
+
+When cancelled by user, the executions in current time window are canceled. Next occurrences will be triggered as usual :
+
+```
+cron_expression: 0 0/10 * * * ?
+duration: 7m
+loop: true
+delay: 2s
+```
+
+![Manual Cancellation](doc/images/ManualCancellation.png "Manual Cancellation")
 
 In the example policy configuration below, if conditions are met, the policy will loop during 3m, with a delay between each triggers of 45s. 
  :
@@ -83,7 +170,7 @@ timer_type: cron
 cron_expression: "0 0/5 * * * ?"
 duration: 3m
 loop: true
-reschedule_delay: 45s
+delay: 45s
 only_one_running: true
 conditions: 
  - "Average value for metric \"ES_Disk_Free\" during last 10m is > 10000"

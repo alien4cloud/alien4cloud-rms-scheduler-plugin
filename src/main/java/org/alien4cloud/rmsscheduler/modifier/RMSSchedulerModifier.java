@@ -7,6 +7,7 @@ import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 import org.alien4cloud.alm.deployment.configuration.flow.FlowExecutionContext;
 import org.alien4cloud.alm.deployment.configuration.flow.TopologyModifierSupport;
+import org.alien4cloud.rmsscheduler.service.RuleGenerator;
 import org.alien4cloud.rmsscheduler.utils.Const;
 import org.alien4cloud.rmsscheduler.dao.RuleDao;
 import org.alien4cloud.rmsscheduler.model.Rule;
@@ -28,7 +29,7 @@ import java.util.Set;
 public class RMSSchedulerModifier extends TopologyModifierSupport {
 
     @Resource
-    private RuleValidator ruleValidator;
+    private RuleGenerator ruleGenerator;
 
     @Resource
     private RuleDao ruleDao;
@@ -74,21 +75,20 @@ public class RMSSchedulerModifier extends TopologyModifierSupport {
             if (conditions != null && conditions.getValue() != null && !conditions.getValue().isEmpty()) {
                 conditions.getValue().forEach(o -> {
                     String r = o.toString();
-                    if (ruleValidator.verify(r)) {
-                        context.getLog().info("Accepted rule condition: " + r);
-                    } else {
-                        // TODO: better context log when errors
-                        context.getLog().error("Unparsable rule condition statement : " + r);
-                    }
                     conditionsBuilder.append("\r\n").append(r);
                 });
             }
             rule.setConditions(conditionsBuilder.toString());
-            context.getLog().info("Rule prepared for policy " + policy.getName());
-
-            ruleSet.add(rule);
             log.debug("Rule created: {}", rule);
-            ruleDao.create(environmentId, ruleSet);
+            if (ruleGenerator.verify(policy.getName(), rule, context.getLog())) {
+                context.getLog().info("Rule prepared for policy " + policy.getName());
+            } else {
+                context.getLog().error("Invalid rule for policy " + policy.getName());
+                return;
+            }
+            ruleSet.add(rule);
         }
+        ruleDao.create(environmentId, ruleSet);
+
     }
 }

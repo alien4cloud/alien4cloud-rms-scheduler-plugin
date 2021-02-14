@@ -97,7 +97,7 @@ conditions:
 workflow_name: run
 ```
 
-## Scheduler features illustrations
+## Scheduler features (illustrated by examples)
 
 `cron_expression` and `duration` let you define the schedule time window :
 
@@ -107,6 +107,8 @@ duration: 7m
 ```
 
 ![Time window definition](doc/images/TimeWindowDefinition.png "Time window definition")
+
+In the example above, the first run at HH:00 was successful, but failed at HH:10.
 
 By default, runs can overlap (if the run duration exceed the time window) :
 
@@ -190,9 +192,12 @@ delay: 2s
 
 When a scheduled workflow is cancelled, all subsequent executions (linked to a given trigger) will not be triggered. But the next trigger will be scheduled.
 
+## Conditions & CEP (illustrated by examples)
+
+TODO
+
 # TODO
 
-- Validate the whole rule (including timer expressions)
 - DSL editor
 - Manage deployment update
 - Manage downtime ? 

@@ -1,4 +1,4 @@
-package org.alien4cloud.rmsscheduler.service;
+package org.alien4cloud.rmsscheduler.service.actions;
 
 import alien4cloud.deployment.DeploymentRuntimeStateService;
 import alien4cloud.deployment.DeploymentService;

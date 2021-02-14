@@ -1,4 +1,4 @@
-package org.alien4cloud.rmsscheduler.service;
+package org.alien4cloud.rmsscheduler.service.actions;
 
 import org.alien4cloud.rmsscheduler.dao.SessionHandler;
 import org.alien4cloud.rmsscheduler.model.RuleTrigger;

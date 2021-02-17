@@ -205,7 +205,67 @@ When a scheduled workflow is cancelled, all subsequent executions (linked to a g
 
 ## Conditions & CEP (illustrated by examples)
 
-TODO
+The most interesting feature of this plugin is the ability to add conditions to your rules. 
+Once a time window has been defined for a trigger (using the schedule properties of the policy), the action (launch a workflow) is conditioned by the conditions of the policy.
+
+Basically, aims of conditions is to evaluate events of type [MetricEvent](src/main/java/org/alien4cloud/rmsscheduler/model/MetricEvent.java).
+A MetricEvent is something with a name, a value and a date (events are timestamped). An event represents a measure of the health of your system at a given date.
+
+Conditions are expressed using sentences that are builtin with the plugin. At this time, the following sentences are available :
+
+- I've got a recent value for metric "**{metric_label}**"
+- Last known metric "**{metric_label}**" is **{operator}** **{metric_value}**
+- Average value for metric "**{metric_label}**" during last **{window_time}** is **{operator}** **{metric_value}**
+
+Where
+
+variable name | description | examples
+------------ | ------------- | -------------
+metric_label | The name of the metric event to consider | Load_Average, Disk_Free
+operator | The comparison operator | \> < >= <= == !=
+metric_value | The value of the metric to consider | 5, 15000
+window_time | The window time to consider | 10m 5s 1m30s
+
+Few examples :
+- _Last known metric "Load_Average" is < 10_ : the workflow will be launched during the time window only if the last value for metric Load_Average is < 10.
+- _Average value for metric "Disk_Free" during last 10m is >= 10000_ : the workflow will be launched during the time window only if the average value for metric Disk_Free is >= 10000 during the last 10 minutes.
+
+Obviously, **metric_label** and **metric_value** depend on how you measure your system health. 
+You will need to use provided or write your own sensor plugin in order to publish events in the system.
+
+Let's take an example : Imagine you have a single sensor that measure the load average of an external system (whatever you want: a database, a kubernetes cluster ...). 
+Regularly, you inject a timestamped event that represents the load average of this system in the rule engine.
+
+You have defined a policy on your topology that is configured like this :
+
+```
+cron_expression: 0 0/5 * * * ?
+duration: 3m
+only_one_running: true
+conditions:
+    - I've got a recent value for metric "Load_Average"
+    - Last known metric "Load_Average" is <= 10
+```
+
+![Conditions example](doc/images/ConditionsExample.png "Conditions example")
+
+The graph at the bottom represents the real system load average. Your sensor will not absolutely give you measures in real time (maybe it's a scheduled process that poll measures regularly, or events are coming in a Kafka topic).
+Metric events that are given to the rule engine are represented at the middle of the schema.
+So what's happened ?
+- at T 00:00:00 we have already received a metric that satisfy our rule (load average is 0, system is sleeping), the workflow is launched.
+- at T 00:01:00 we receive an event with value 20 (our workflow is running, maybe it's the consequence of this).
+- at T 00:02:30 the workflow ends. The load average decrease. 
+- at T 00:03:30 antoher process, not managed by us is loading the system, the load average increase. 
+- at T 00:04:00 we receive an event with value 12 
+- at T 00:05:00 a new time window for the trigger is available. But the condition is not satisfied : the workflow is not launched.
+- at T 00:06:00 we receive an event with value 10. The workflow is launched.
+- at T 00:07:30 we receive an event with value 23. 
+- at T 00:10:00 a new window is available, but the condition is not satisfied (our last known load average is 23). The workflow will never be launched during this time window since condition is never met.
+- at T 00:15:00 a new window is available, but the condition is not satisfied (our last known load average is 18).
+- at T 00:17:30 we receive a event with value 10. The workflow is launched.
+- This time the workflow take more time to do it's job and go outside the time window. The time window starting at 00:20:00 will not trigger the launch since it's already running.
+
+It's important to understand that events have a TTL (defined in the plugin configuration). They expire so disappear from the system after this TTL is expired.
 
 # TODO
 

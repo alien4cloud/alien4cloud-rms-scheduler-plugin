@@ -85,7 +85,7 @@ public class RuleTrigger {
      * @param delay
      */
     public void reschedule(long delay) {
-        if (this.maxRun < 0 || ++this.runCount < this.maxRun) {
+        if (this.maxRun < 0 || this.runCount < this.maxRun) {
             // wa can schedule again
             this.status = RuleTriggerStatus.SCHEDULED;
             Calendar cal = Calendar.getInstance();

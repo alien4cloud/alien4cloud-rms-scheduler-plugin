@@ -78,7 +78,7 @@ You can publish an event of type **ES_Disk_Free** using the following REST query
 curl -X PUT http://localhost:8088/rest/rmsscheduler/events/publish/ES_Disk_Free/20000
 ```
 
-Events are timestamped and have a TTL of 5m (TODO: make plugin configurable)
+Events are timestamped and have a TTL of 10m (configurable for the whole plugin).
 
 Another example condition could also be `Average value for metric "ES_Disk_Free" during last 10m is > 10000`.
 
@@ -217,7 +217,7 @@ Conditions are expressed using sentences that are builtin with the plugin. At th
 - Last known metric "**{metric_label}**" is **{operator}** **{metric_value}**
 - Average value for metric "**{metric_label}**" during last **{window_time}** is **{operator}** **{metric_value}**
 
-Where
+... where :
 
 variable name | description | examples
 ------------ | ------------- | -------------

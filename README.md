@@ -26,14 +26,14 @@ This plugin can be tuned by setting following properties in A4C YAML configurati
 Property name | default | description 
 ------------ | -------------| -------------
 metricEventTtl | 10m | The TTL for events : you should set this config regarding to the frequency with witch you expect to receive events in your loopback.
-heartbeatPeriod | 60 | In seconds, the period between 2 rule fires. A heartbeat will fire all rules on each session (1 session per active deployments).
+heartbeatPeriod | 60000 | In milliseconds, the period between 2 rule fires. A heartbeat will fire all rules on each session (1 session per active deployments).
 
 For tests purposes you should reduce `heartbeatPeriod` in order to make the system more reactive.
 
 ```
 alien4cloud-rms-scheduler-plugin:
   metricEventTtl: 10m
-  heartbeatPeriod: 1
+  heartbeatPeriod: 500
 ```
 
 # How-to
@@ -165,6 +165,17 @@ delay: 2s
 ```
 
 ![Max run](doc/images/MaxRun.png "Max run")
+
+A 0s time window means the trigger will execute once (loop or retry_on_error is uneffective)
+
+```
+cron_expression: 0 0/10 * * * ?
+duration: 0s
+retry_on_error: true
+loop: true
+```
+
+![0 Time Window](doc/images/0timeWindow.png "0 Time Window")
 
 Execution can be cancelled by the rule itself if time window expires :
 

@@ -9,13 +9,28 @@ import org.kie.api.builder.model.KieModuleModel;
 import org.kie.api.conf.EventProcessingOption;
 import org.kie.api.runtime.KieContainer;
 import org.kie.internal.io.ResourceFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.PropertiesFactoryBean;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.quartz.SchedulerFactoryBean;
+import org.springframework.scheduling.quartz.SpringBeanJobFactory;
+
+import java.io.IOException;
+import java.util.Properties;
+
 
 @Configuration
 @ComponentScan(basePackages = "org.alien4cloud.rmsscheduler")
+@EnableScheduling
 public class RMSPluginContextConfiguration {
+
+    @Autowired
+    private ApplicationContext applicationContext;
 
     //@Bean
     public KieContainer kieContainer() {
@@ -40,6 +55,7 @@ public class RMSPluginContextConfiguration {
         kieBuilder.buildAll();
 
         KieModule kieModule = kieBuilder.getKieModule();
+
         return kieServices.newKieContainer(kieModule.getReleaseId());
     }
 

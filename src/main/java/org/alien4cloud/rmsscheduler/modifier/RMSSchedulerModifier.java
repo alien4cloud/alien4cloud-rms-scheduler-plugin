@@ -15,6 +15,7 @@ import org.alien4cloud.tosca.model.definitions.ListPropertyValue;
 import org.alien4cloud.tosca.model.templates.PolicyTemplate;
 import org.alien4cloud.tosca.model.templates.Topology;
 import org.alien4cloud.tosca.utils.TopologyNavigationUtil;
+import org.drools.core.time.TimeUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -64,8 +65,8 @@ public class RMSSchedulerModifier extends TopologyModifierSupport {
             rule.setRetryOnError(Boolean.valueOf(PropertyUtil.getScalarValue(policy.getProperties().get("retry_on_error"))));
             rule.setOnlyOneRunning(Boolean.valueOf(PropertyUtil.getScalarValue(policy.getProperties().get("only_one_running"))));
             rule.setLoop(Boolean.valueOf(PropertyUtil.getScalarValue(policy.getProperties().get("loop"))));
-            rule.setDuration(PropertyUtil.getScalarValue(policy.getProperties().get("duration")));
-            rule.setDelay(PropertyUtil.getScalarValue(policy.getProperties().get("delay")));
+            rule.setDuration(TimeUtils.parseTimeString(PropertyUtil.getScalarValue(policy.getProperties().get("duration"))));
+            rule.setDelay(TimeUtils.parseTimeString(PropertyUtil.getScalarValue(policy.getProperties().get("delay"))));
             rule.setMaxRun(Integer.parseInt(PropertyUtil.getScalarValue(policy.getProperties().get("max_run"))));
             rule.setCancelOnTimeout(Boolean.valueOf(PropertyUtil.getScalarValue(policy.getProperties().get("cancel_on_timeout"))));
             rule.setAction(PropertyUtil.getScalarValue(policy.getProperties().get("workflow_name")));

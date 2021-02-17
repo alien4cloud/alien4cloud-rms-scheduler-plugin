@@ -18,12 +18,26 @@ declare TickTocker
     @propertyReactive
     now : Date
 end
+declare RuleTrigger
+    @propertyReactive
+    status : RuleTriggerStatus
+    ruleId: String
+    environmentId: String
+    deploymentId: String
+    executionId: String
+    action: String
+    scheduleTime: Date
+    expirationDelay: long
+    expirationTime: Date
+    maxRun: int
+    runCount: int
+end
 
 rule "Main: Cancel schedule rule"
     salience 100
 	when
 	    $tickTocker: TickTocker()
-		$r: RuleTrigger(status == RuleTriggerStatus.SCHEDULED, $tickTocker.now > expirationTime)
+		$r: RuleTrigger(status == RuleTriggerStatus.SCHEDULED, expirationDelay > 0 && $tickTocker.now > expirationTime)
 	then
 		modify($r) {
             setStatus(RuleTriggerStatus.DROPPED)
@@ -34,7 +48,7 @@ rule "Main: Timeout execution rule"
     salience 100
 	when
 	    $tickTocker: TickTocker()
-		$r: RuleTrigger(status == RuleTriggerStatus.RUNNING, $tickTocker.now > expirationTime)
+		$r: RuleTrigger(status == RuleTriggerStatus.RUNNING, expirationDelay > 0 && $tickTocker.now > expirationTime)
 	then
 		modify($r) {
             setStatus(RuleTriggerStatus.TIMEOUT)
@@ -45,11 +59,16 @@ rule "Main: Delete execution rule"
     salience 100
 	when
 	    $tickTocker: TickTocker()
-		$r: RuleTrigger(status != RuleTriggerStatus.RUNNING && status != RuleTriggerStatus.SCHEDULED, $tickTocker.now > expirationTime)
+		$r: RuleTrigger(status != RuleTriggerStatus.RUNNING && status != RuleTriggerStatus.SCHEDULED, expirationDelay > 0 && $tickTocker.now > expirationTime)
 	then
 		delete($r);
 	end
 
-
-
+rule "Main: Delete DONE or ERROR rule"
+    salience 1
+	when
+		$r: RuleTrigger(status == RuleTriggerStatus.DONE || status == RuleTriggerStatus.ERROR)
+	then
+		delete($r);
+	end
 

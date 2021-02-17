@@ -45,6 +45,11 @@ public class RuleTrigger {
     /**
      * End of the time window the workflow can be launched.
      */
+    private long expirationDelay;
+
+    /**
+     * End of the time window the workflow can be launched.
+     */
     private Date expirationTime;
 
     /**
@@ -54,17 +59,18 @@ public class RuleTrigger {
 
     private int runCount = 0;
 
-    public RuleTrigger(String ruleId, String environmentId, String deploymentId, String action, String expirationDelai, int maxRun) {
+    // TODO: change expirationDelai to long
+    public RuleTrigger(String ruleId, String environmentId, String deploymentId, String action, long expirationDelay, int maxRun) {
         this.ruleId = ruleId;
         this.environmentId = environmentId;
         this.deploymentId = deploymentId;
         this.action = action;
         this.maxRun = maxRun;
-        long expirationDelay = TimeUtils.parseTimeString(expirationDelai);;
         // FIXME: quelque chose me fait penser que c'est pas à lui de faire ça
         // Utiliser l'expiration des events dans drools ?
         Calendar cal = Calendar.getInstance();
         this.scheduleTime = new Date(cal.getTimeInMillis());
+        this.expirationDelay = expirationDelay;
         this.expirationTime = new Date(cal.getTimeInMillis() + expirationDelay);
         this.status = RuleTriggerStatus.SCHEDULED;
     }
@@ -78,16 +84,19 @@ public class RuleTrigger {
      * FIXME : not a good idea to have logic here, logic must be in rules !
      * @param delay
      */
-    public void reschedule(String delay) {
+    public void reschedule(long delay) {
         if (this.maxRun < 0 || ++this.runCount < this.maxRun) {
             // wa can schedule again
             this.status = RuleTriggerStatus.SCHEDULED;
-            long scheduleDelay = TimeUtils.parseTimeString(delay);
             Calendar cal = Calendar.getInstance();
-            this.scheduleTime = new Date(cal.getTimeInMillis() + scheduleDelay);
+            this.scheduleTime = new Date(cal.getTimeInMillis() + delay);
         } else {
             this.status = RuleTriggerStatus.DROPPED;
         }
+    }
+
+    public boolean isExpired(Date now) {
+        return this.expirationDelay > 0 && this.expirationTime.before(now);
     }
 
 }

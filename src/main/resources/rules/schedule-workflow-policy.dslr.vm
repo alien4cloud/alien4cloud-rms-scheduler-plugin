@@ -9,7 +9,7 @@ import java.util.Calendar
 
 expander drools-poc.dsl
 
-rule "$rule.id: Schedule rule"
+rule "$rule.id: Schedule"
     salience 10
     timer ( $rule.timerType: $rule.timerExpression )
 	when
@@ -19,8 +19,9 @@ rule "$rule.id: Schedule rule"
 	    Schedule a trigger with id "$rule.id" for environment "$rule.environmentId" deployment "$rule.deploymentId" running "$rule.action" using a TTL of $rule.duration and a max of $rule.maxRun
 	end
 
-rule "$rule.id: Conditionnal trigger rule"
+rule "$rule.id: Conditionnal trigger"
     salience 5
+    activation-group "condition-trigger"
 	when
 	    // Only add if onlyOneRunning
 #if($rule.onlyOneRunning)
@@ -35,23 +36,32 @@ $rule.conditions
         Fire the trigger
 	end
 
-rule "$rule.id: Retry rule"
-    salience 5
+rule "$rule.id: Delete 0 time window"
+    salience 4
+    activation-group "condition-trigger"
+	when
+		A scheduled no window trigger exists with id $rule.id
+	then
+		Delete the trigger
+	end
+
+rule "$rule.id: Retry"
+    salience 10
     // "retryOnError" value
     enabled $rule.retryOnError
 	when
-        A trigger in ERROR exists with id $rule.id
+        A trigger with window in ERROR exists with id $rule.id
 	then
 	    Log "---- Re-schedule de $rule.id -----"
 		Reschedule the trigger in $rule.delay
 	end
 
-rule "$rule.id: Loop rule"
-    salience 5
+rule "$rule.id: Loop"
+    salience 10
     // "retryOnError" value
     enabled $rule.loop
 	when
-        A trigger in DONE exists with id $rule.id
+        A trigger with window in DONE exists with id $rule.id
 	then
 	    Log "---- Re-schedule de $rule.id -----"
 		Reschedule the trigger in $rule.delay

@@ -2,8 +2,8 @@ package org.alien4cloud.rmsscheduler.service;
 
 import alien4cloud.deployment.DeploymentService;
 import alien4cloud.events.AlienEvent;
+import alien4cloud.events.BeforeDeploymentUndeployedEvent;
 import alien4cloud.events.DeploymentCreatedEvent;
-import alien4cloud.events.DeploymentUndeployedEvent;
 import alien4cloud.model.deployment.Deployment;
 import lombok.extern.slf4j.Slf4j;
 import org.alien4cloud.rmsscheduler.RMSPluginConfiguration;
@@ -28,12 +28,12 @@ import org.kie.api.event.rule.ObjectUpdatedEvent;
 import org.kie.api.runtime.KieSession;
 import org.kie.internal.utils.KieHelper;
 import org.springframework.context.ApplicationListener;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.inject.Inject;
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -52,6 +52,11 @@ import java.util.stream.Collectors;
 @Slf4j
 public class KieSessionManager extends DefaultRuleRuntimeEventListener implements ApplicationListener<AlienEvent> {
 
+    /**
+     * Executor service in charge of regularly fire rules for existing sessions.
+     */
+    private ScheduledExecutorService schedulerService;
+
     @Resource
     private RuleGenerator ruleGenerator;
 
@@ -67,40 +72,42 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
     @Resource
     private RMSPluginConfiguration pluginConfiguration;
 
-    /**
-     * Executor service in charge of regularly fire rules for existing sessions.
-     */
-    private ScheduledExecutorService schedulerService;
-
     @Inject
     private CancelWorkflowAction cancelWorkflowAction;
     @Inject
     private LaunchWorkflowAction launchWorkflowAction;
 
     @PostConstruct
-    public void init() throws IOException {
-
+    public void init() {
         this.recoverKieSessions();
-
         this.schedulerService = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("rms-rules-scheduler"));
 
-        log.info("Fire rule heartbeat period : {}s", pluginConfiguration.getHeartbeatPeriod());
+        log.info("Fire rule heartbeat period : {}ms", pluginConfiguration.getHeartbeatPeriod());
         // TODO: use quartz scheduler
         this.schedulerService.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                log.trace("Iterating over sessions in order to fire all rules");
-                sessionDao.list().forEach(sessionHandler -> {
-                    KieSession kieSession = sessionHandler.getSession();
-                    // Refresh the ticktocker
-                    TickTocker tickTocker = (TickTocker)kieSession.getObject(sessionHandler.getTicktockerHandler());
-                    tickTocker.setNow(new Date());
-                    kieSession.update(sessionHandler.getTicktockerHandler(), tickTocker);
-                    // Fire rules
-                    kieSession.fireAllRules();
-                });
+                fireAllSessionsRules();
             }
-        },0, pluginConfiguration.getHeartbeatPeriod(), TimeUnit.SECONDS);
+        },0, pluginConfiguration.getHeartbeatPeriod(), TimeUnit.MILLISECONDS);
+    }
+
+    //@Scheduled(cron = "${" + RMSPluginConfiguration.CONFIG_PREFIX + ".heartbeatCron:" + RMSPluginConfiguration.DEFAULT_HEARTBEAT_CRON + "}")
+    public void fireAllSessionsRules() {
+        log.trace("Iterating over sessions in order to fire all rules");
+        Calendar now = Calendar.getInstance();
+        // our precision is seconds (cron), so let's set ms to 0
+        //now.set(Calendar.MILLISECOND, 0);
+
+        sessionDao.list().forEach(sessionHandler -> {
+            KieSession kieSession = sessionHandler.getSession();
+            // Refresh the ticktocker
+            TickTocker tickTocker = (TickTocker)kieSession.getObject(sessionHandler.getTicktockerHandler());
+            tickTocker.setNow(now.getTime());
+            kieSession.update(sessionHandler.getTicktockerHandler(), tickTocker);
+            // Fire rules
+            kieSession.fireAllRules();
+        });
     }
 
     /**
@@ -192,10 +199,11 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
     }
 
     public synchronized void onApplicationEvent(AlienEvent alienEvent) {
+        log.debug("AlienEvent of type {} occured : {}", alienEvent.getClass(), alienEvent);
         if (alienEvent instanceof DeploymentCreatedEvent) {
             onDeploymentCreatedEvent((DeploymentCreatedEvent)alienEvent);
-        } else if (alienEvent instanceof DeploymentUndeployedEvent) {
-            onDeploymentUndeployedEvent((DeploymentUndeployedEvent)alienEvent);
+        } else if (alienEvent instanceof BeforeDeploymentUndeployedEvent) {
+            onDeploymentUndeployedEvent((BeforeDeploymentUndeployedEvent)alienEvent);
         }
     }
 
@@ -216,14 +224,14 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
         }
     }
 
-    private void onDeploymentUndeployedEvent(DeploymentUndeployedEvent deploymentUndeployedEvent) {
+    // TODO: session should only be paused, then delete after undeployed has been successful
+    private void onDeploymentUndeployedEvent(BeforeDeploymentUndeployedEvent deploymentUndeployedEvent) {
         log.debug("Deployment ends {}", deploymentUndeployedEvent.getDeploymentId());
         SessionHandler sessionHandler = sessionDao.get(deploymentUndeployedEvent.getDeploymentId());
         if (sessionHandler != null) {
             sessionHandler.getSession().halt();
             sessionHandler.getSession().dispose();
             sessionDao.delete(sessionHandler);
-            Deployment deployment = deploymentService.get(deploymentUndeployedEvent.getDeploymentId());
             ruleDao.deleteHandledRules(deploymentUndeployedEvent.getDeploymentId());
         }
     }

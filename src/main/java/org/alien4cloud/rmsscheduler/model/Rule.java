@@ -42,9 +42,9 @@ public class Rule {
     private String timerExpression;
 
     /**
-     * Duration of the time window ex 5m or 4h or 1d.
+     * Duration of the time window in ms.
      */
-    private String duration;
+    private long duration;
 
     /**
      * A string representation of the schedule conditions of the rule.
@@ -74,9 +74,9 @@ public class Rule {
     private boolean loop;
 
     /**
-     * The delay beetween reschedules (after error or if looping), ex 30s or 10m or 2h.
+     * The delay beetween reschedules (after error or if looping) in ms.
      */
-    private String delay;
+    private long delay;
 
     /**
      * The maximum the action will be repeated (in case of ERROR and retry_on_error or loop mode).

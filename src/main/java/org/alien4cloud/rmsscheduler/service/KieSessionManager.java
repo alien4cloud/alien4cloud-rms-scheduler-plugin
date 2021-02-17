@@ -32,6 +32,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import javax.inject.Inject;
 import java.util.*;
@@ -90,6 +91,11 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
                 fireAllSessionsRules();
             }
         },0, pluginConfiguration.getHeartbeatPeriod(), TimeUnit.MILLISECONDS);
+    }
+
+    @PreDestroy
+    public void destroy() {
+        this.schedulerService.shutdown();
     }
 
     //@Scheduled(cron = "${" + RMSPluginConfiguration.CONFIG_PREFIX + ".heartbeatCron:" + RMSPluginConfiguration.DEFAULT_HEARTBEAT_CRON + "}")

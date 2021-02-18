@@ -51,7 +51,7 @@ policy_types:
         default: false
         required: true
       delay:
-        description: The delay beetween reschedules (after error or while looping), ex 30s or 10m or 2h.
+        description: The minimum delay beetween reschedules (after error or while looping), ex 30s or 10m or 2h.
         type: string
         default: 10s
         required: true

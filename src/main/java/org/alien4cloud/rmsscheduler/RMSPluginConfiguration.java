@@ -6,6 +6,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Component
@@ -30,5 +32,10 @@ public class RMSPluginConfiguration {
      * If you want to test the engine, you should set to 1 to have a more reactive system.
      */
     private long heartbeatPeriod = 60 * 1000;
+
+    /**
+     * A list of files can be provided for DSLs. An entry can be a path in the classpath or an absolute path.
+     */
+    private List<String> dlsFiles;
 
 }

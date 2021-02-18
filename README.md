@@ -23,10 +23,11 @@ Without conditions, it will act as a runtime scheduler that will just schedule w
 This plugin can be tuned by setting following properties in A4C YAML configuration 
 (prefix is `alien4cloud-rms-scheduler-plugin`) :
 
-Property name | default | description 
------------- | -------------| -------------
-metricEventTtl | 10m | The TTL for events : you should set this config regarding to the frequency with witch you expect to receive events in your loopback.
-heartbeatPeriod | 60000 | In milliseconds, the period between 2 rule fires. A heartbeat will fire all rules on each session (1 session per active deployments).
+Property name | type | default | description 
+------------ | ------------- | -------------| -------------
+metricEventTtl | period | 10m | The TTL for events : you should set this config regarding to the frequency with witch you expect to receive events in your loopback.
+heartbeatPeriod | long | 60000 | In milliseconds, the period between 2 rule fires. A heartbeat will fire all rules on each session (1 session per active deployments).
+dlsFiles | String[] | <empty> | List of absolute path or classpath for DSL files to be included in KIE sessions.
 
 For tests purposes you should reduce `heartbeatPeriod` in order to make the system more reactive.
 
@@ -211,15 +212,17 @@ Once a time window has been defined for a trigger (using the schedule properties
 Basically, aims of conditions is to evaluate events of type [MetricEvent](src/main/java/org/alien4cloud/rmsscheduler/model/MetricEvent.java).
 A MetricEvent is something with a name, a value and a date (events are timestamped). An event represents a measure of the health of your system at a given date.
 
-Conditions are expressed using sentences that are builtin with the plugin. At this time, the following sentences are available :
+Conditions are expressed using statements that are builtin with the plugin (See [DSL](src/main/resources/rules/schedule-workflow.dsl)). At this time, the following sentences are available :
 
-- I've got a recent value for metric "**{metric_label}**"
-- Last known metric "**{metric_label}**" is **{operator}** **{metric_value}**
-- Average value for metric "**{metric_label}**" during last **{window_time}** is **{operator}** **{metric_value}**
+Statement | 
+------------ |
+I've got a recent value for metric "**{metric_label}**" |
+Last known metric "**{metric_label}**" is **{operator}** **{metric_value}** |
+Average value for metric "**{metric_label}**" during last **{window_time}** is **{operator}** **{metric_value}** |
 
 ... where :
 
-variable name | description | examples
+Variable name | Description | Examples
 ------------ | ------------- | -------------
 metric_label | The name of the metric event to consider | Load_Average, Disk_Free
 operator | The comparison operator | \> < >= <= == !=
@@ -266,6 +269,47 @@ So what's happened ?
 - This time the workflow take more time to do it's job and go outside the time window. The time window starting at 00:20:00 will not trigger the launch since it's already running.
 
 It's important to understand that events have a TTL (defined in the plugin configuration). They expire so disappear from the system after this TTL is expired.
+
+# DSL
+
+A basic builtin DSL is provided by the plugin but you can add your own DSL definitions. 
+This can allow you to translate DSL in your own language, or give more signification to sentences.
+
+For example, if you have a sensor that injects a metric named "Load_Average" in the rule engine, you can already use the builtin DSL to add condition to your policy :
+
+```
+Last known metric "Load_Average" is < 10
+```
+
+But maybe you want to define more specific condition, for example :
+
+```
+The load average of the system is less than 10
+```
+
+You should define the following DSL in order to make the rule engine parse this statement :
+
+```
+[when]less than=<
+[when]The load average of the system is {operator} {metric_value}=
+Number( doubleValue {operator} {metric_value} ) from accumulate
+(
+    MetricEvent(label == "Load_Average", $value : value) over window:length(1),
+    average($value)
+)
+```
+
+Have a look to [Drools documentation](https://docs.jboss.org/drools/release/7.48.0.Final/drools-docs/html_single/index.html#_domain_specific_languages) to learn more about DSL.
+
+DSL can be enriched by adding files by configuring the plugin. Using the `dlsFiles` configuration property, you can add absolute path or classpath resources that should be DSL definitions.
+
+```
+alien4cloud-rms-scheduler-plugin:
+  dlsFiles:
+    - /Users/xdegenne/work/src/alien4cloud-rms-scheduler-plugin/src/test/resources/dsl/test.dsl
+    # This file is in the classpath (for example in a4c config folder)
+    - pathtest.dsl
+```
 
 # TODO
 

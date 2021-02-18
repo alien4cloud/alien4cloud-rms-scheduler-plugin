@@ -33,6 +33,9 @@ public class RuleGenerator {
     @Resource
     private RMSPluginConfiguration pluginConfiguration;
 
+    @Resource
+    private DSLLoader dslLoader;
+
     private String ruleCompileDrl;
     private String ruleCompileDsl;
 
@@ -73,6 +76,9 @@ public class RuleGenerator {
         kieHelper.addContent(ruleCompileDrl, ResourceType.DRL);
         // We need to name the DSL since it's referenced in DSLR
         kieHelper.addContent(ruleCompileDsl, "drools-poc.dsl");
+        dslLoader.getDSLs().forEach(dslContent -> {
+            kieHelper.addContent(dslContent, ResourceType.DSL);
+        });
 
         for (Rule rule : rules) {
             String ruleText = generateRule(rule);

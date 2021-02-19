@@ -5,6 +5,7 @@ import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 import org.alien4cloud.alm.deployment.configuration.flow.FlowExecutionLog;
 import org.alien4cloud.rmsscheduler.RMSPluginConfiguration;
+import org.alien4cloud.rmsscheduler.dao.DSLDao;
 import org.alien4cloud.rmsscheduler.model.Rule;
 import org.alien4cloud.rmsscheduler.utils.KieUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -12,16 +13,14 @@ import org.kie.api.builder.Message;
 import org.kie.api.builder.Results;
 import org.kie.api.io.ResourceType;
 import org.kie.internal.utils.KieHelper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Rules are templated and generated using velocity.
@@ -35,6 +34,9 @@ public class RuleGenerator {
 
     @Resource
     private DSLLoader dslLoader;
+
+    @Autowired
+    private DSLDao dslDao;
 
     private String ruleCompileDrl;
     private String ruleCompileDsl;
@@ -79,6 +81,7 @@ public class RuleGenerator {
         dslLoader.getDSLs().forEach(dslContent -> {
             kieHelper.addContent(dslContent, ResourceType.DSL);
         });
+        kieHelper.addContent(dslDao.getConcatenatedDsl(), ResourceType.DSL);
 
         for (Rule rule : rules) {
             String ruleText = generateRule(rule);
@@ -87,6 +90,12 @@ public class RuleGenerator {
         }
 
         return kieHelper;
+    }
+
+    public Results verifyDSL(String dslContent) {
+        KieHelper kieHelper = buildKieHelper(Collections.emptyList());
+        kieHelper.addContent(dslContent, ResourceType.DSL);
+        return kieHelper.verify();
     }
 
     public boolean verify(String policyName, Rule rule, FlowExecutionLog log) {

@@ -1,0 +1,7 @@
+{
+  "RMS_SCHEDULER" : {
+    "MENU": "Scheduler rules",
+    "DESCRIPTION": "This editor allows you to edit additional DSL for rule engine.",
+    "ERRORS_EXIST": "Some errors have been found in DSL, please fix and save again !"
+  }
+}

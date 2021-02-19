@@ -1,0 +1,7 @@
+{
+  "RMS_SCHEDULER" : {
+    "MENU": "Règles de déclenchement",
+    "DESCRIPTION": "Cet editeur vous permet d'enrichir le DSL pour le moteur de règles.",
+    "ERRORS_EXIST": "Des erreurs ont été trouvées dans le DSL, réglez les problèmes et sauvegardez à nouveau !"
+  }
+}

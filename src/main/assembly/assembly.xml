@@ -14,6 +14,14 @@
 				<include>**/**</include>
 			</includes>
 		</fileSet>
+		<fileSet>
+			<directory>target/webapp</directory>
+			<lineEnding>keep</lineEnding>
+			<outputDirectory>ui/</outputDirectory>
+			<includes>
+				<include>**/**</include>
+			</includes>
+		</fileSet>
 	</fileSets>
 	<dependencySets>
 		<dependencySet>

@@ -109,6 +109,23 @@
         </resources>
         <plugins>
             <plugin>
+                <groupId>fr.fastconnect</groupId>
+                <artifactId>calm-yeoman-maven-plugin</artifactId>
+                <version>1.0.3</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>init</goal>
+                            <goal>build</goal>
+                            <goal>package</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <yeomanProjectDirectory>./</yeomanProjectDirectory>
+                </configuration>
+            </plugin>
+            <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
                     <appendAssemblyId>false</appendAssemblyId>

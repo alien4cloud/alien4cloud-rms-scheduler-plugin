@@ -32,7 +32,7 @@ public class RuleDao extends ESGenericSearchDAO {
             throw new IndexingServiceException("Could not initialize elastic search mapping builder", e);
         }
         // Audit trace index
-        initIndices("rule", null, Rule.class);
+        initIndices("rms_rule", null, Rule.class);
         initCompleted();
     }
 

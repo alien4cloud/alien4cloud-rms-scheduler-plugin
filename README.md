@@ -14,7 +14,7 @@ How it works in few words:
 Without conditions, it will act as a runtime scheduler that will just schedule workflows with smart features :
 - You can retry if a workflow fail.
 - You can loop a successful job during the time window.
-- You can define the delay between retries or repeat.
+- You can define the minimum delay between retries or repeat.
 - You can define the maximum of triggers inside the time window.
 - You can cancel the execution when time window expires in order to ensure no activity outside defined periods.
 
@@ -42,12 +42,12 @@ alien4cloud-rms-scheduler-plugin:
 Add the **RMS Scheduler Modifier** to your location at **post-policy-match** phase.
 Create a topology using simple mocks and add one or several **RMSScheduleWorkflowPolicy** to your topology (or use [this one](src/test/resources/csar/sample.yml)).
 
+## Quick start
+
 The following policy config example will :
 - trigger the run workflow (you need a run workflow !) each hour at 0 and 30 minutes.
 - if workflow fails, it will be retried maximum 2 times (during the window time of 10 minutes).
 - each retry will be delayed of 1 minute
-
-## Examples
 
 Property name | value
 ------------ | -------------
@@ -272,8 +272,8 @@ It's important to understand that events have a TTL (defined in the plugin confi
 
 # DSL
 
-A basic builtin DSL is provided by the plugin but you can add your own DSL definitions. 
-This can allow you to translate DSL in your own language, or give more signification to sentences.
+A basic builtin DSL is provided by the plugin, but you can add your own DSL definitions. 
+This can allow you to translate DSL in your own language, or to give more signification to sentences.
 
 For example, if you have a sensor that injects a metric named "Load_Average" in the rule engine, you can already use the builtin DSL to add condition to your policy :
 
@@ -281,7 +281,7 @@ For example, if you have a sensor that injects a metric named "Load_Average" in 
 Last known metric "Load_Average" is < 10
 ```
 
-But maybe you want to define more specific condition, for example :
+Maybe you want to define more specific condition, for example :
 
 ```
 The load average of the system is less than 10
@@ -301,7 +301,7 @@ Number( doubleValue {operator} {metric_value} ) from accumulate
 
 Have a look to [Drools documentation](https://docs.jboss.org/drools/release/7.48.0.Final/drools-docs/html_single/index.html#_domain_specific_languages) to learn more about DSL.
 
-DSL can be enriched by adding files by configuring the plugin. Using the `dlsFiles` configuration property, you can add absolute path or classpath resources that should be DSL definitions.
+DSL can be enriched by adding files by configuring the plugin. Using the `dlsFiles` configuration property, you can add the absolute path or classpath resources that should be DSL definitions.
 
 ```
 alien4cloud-rms-scheduler-plugin:
@@ -310,6 +310,14 @@ alien4cloud-rms-scheduler-plugin:
     # This file is in the classpath (for example in a4c config folder)
     - pathtest.dsl
 ```
+
+Finally, you can also enrich the DSL using the UI (menu Administration / Scheduler Rules).
+
+Please not that the DSL editor will detect DSL parsing error but will **not validate the right side of the expression** : this means that a DSL can be known as valid but generate errors in rules. We will soon add the ability to add DSLR test statements in order to ensure all is correct.
+
+> Be aware that editing DSLs (changing or removing sentences) can have impact onto existing applications. 
+> If you remove or change a sentence that is used by an existing application, it's rules can become invalid and in this case, the application can not be deployed anymore.
+> Unless you know exactly what you are doing, you should never delete or update sentences.
 
 # TODO
 

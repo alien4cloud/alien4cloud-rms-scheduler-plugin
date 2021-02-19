@@ -4,6 +4,7 @@ version: ${project.version}
 description: >
   A rule based scheduler that launch workflows.
 configuration_class: org.alien4cloud.rmsscheduler.RMSPluginContextConfiguration
+ui_entry_point: scripts/plugin.js
 component_descriptors:
   - bean_name: rms-scheduler-modifier
     name: RMS Scheduler Modifier

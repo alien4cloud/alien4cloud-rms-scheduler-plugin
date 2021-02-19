@@ -3,7 +3,9 @@ package org.alien4cloud.rmsscheduler.service;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.alien4cloud.rmsscheduler.RMSPluginConfiguration;
+import org.alien4cloud.rmsscheduler.dao.DSLDao;
 import org.alien4cloud.rmsscheduler.utils.KieUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;

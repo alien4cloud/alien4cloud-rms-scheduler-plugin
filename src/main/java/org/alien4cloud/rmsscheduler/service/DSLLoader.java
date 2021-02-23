@@ -31,7 +31,7 @@ public class DSLLoader {
     @Resource
     private RMSPluginConfiguration pluginConfiguration;
 
-    private List<String> dslFilesContent;
+    private List<String> dslFilesContent = Lists.newArrayList();
 
     @PostConstruct
     public void init() {
@@ -41,7 +41,6 @@ public class DSLLoader {
     }
 
     private void loadDslFiles(List<String> files) {
-        dslFilesContent = Lists.newArrayList();
         files.forEach(filePath -> {
             log.info("Trying to read content from {}", filePath);
             try {

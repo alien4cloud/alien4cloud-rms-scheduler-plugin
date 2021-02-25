@@ -5,7 +5,6 @@ import alien4cloud.rest.model.RestResponse;
 import alien4cloud.rest.model.RestResponseBuilder;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
-import org.alien4cloud.rmsscheduler.dao.RuleDao;
 import org.alien4cloud.rmsscheduler.dao.SessionDao;
 import org.alien4cloud.rmsscheduler.dao.SessionHandler;
 import org.alien4cloud.rmsscheduler.model.MetricEvent;
@@ -27,18 +26,18 @@ import java.util.Collection;
 @RequestMapping({ "/rest/rmsscheduler/debug" })
 public class RMSDebugControler {
 
-    @Autowired
-    private RuleDao ruleDao;
+/*    @Autowired
+    private RuleDao ruleDao;*/
 
     @Autowired
     private SessionDao sessionDao;
 
-    @RequestMapping(value = "/rules", method = RequestMethod.GET, produces = "application/json")
+/*    @RequestMapping(value = "/rules", method = RequestMethod.GET, produces = "application/json")
     public RestResponse<Collection<Rule>> exploreRules() {
         RestResponseBuilder<Collection<Rule>> builder = RestResponseBuilder.<Collection<Rule>>builder();
         builder.data(ruleDao.list());
         return builder.build();
-    }
+    }*/
 
     @RequestMapping(value = "/sessions/{sessionId}", method = RequestMethod.GET, produces = "application/json")
     public RestResponse<Collection<? extends Object>> exploreSession(@PathVariable String sessionId) {

@@ -4,7 +4,6 @@ import alien4cloud.paas.IPaasEventListener;
 import alien4cloud.paas.IPaasEventService;
 import alien4cloud.paas.model.*;
 import lombok.extern.slf4j.Slf4j;
-import org.alien4cloud.rmsscheduler.dao.RuleDao;
 import org.alien4cloud.rmsscheduler.dao.SessionDao;
 import org.alien4cloud.rmsscheduler.dao.SessionHandler;
 import org.alien4cloud.rmsscheduler.model.RuleTrigger;
@@ -35,9 +34,6 @@ public class WorkflowListener {
 
     @Resource
     private KieSessionManager kieSessionManager;
-
-    @Resource
-    private RuleDao ruleDao;
 
     @PostConstruct
     public void init() {
@@ -70,19 +66,19 @@ public class WorkflowListener {
             }
         } else if (event instanceof PaaSWorkflowSucceededEvent) {
             if (event.getWorkflowId().equals(NormativeWorkflowNameConstants.INSTALL)) {
-                kieSessionManager.initKieSession(event.getDeploymentId());
+                kieSessionManager.prepareKieSession(event.getDeploymentId());
             } else {
                 updateFact(event, RuleTriggerStatus.DONE);
             }
         } else if (event instanceof PaaSWorkflowFailedEvent) {
             if (event.getWorkflowId().equals(NormativeWorkflowNameConstants.INSTALL)) {
-                ruleDao.deleteHandledRules(event.getDeploymentId());
+                //ruleDao.deleteHandledRules(event.getDeploymentId());
             } else {
                 updateFact(event, RuleTriggerStatus.ERROR);
             }
         } else if (event instanceof PaaSWorkflowCancelledEvent) {
             if (event.getWorkflowId().equals(NormativeWorkflowNameConstants.INSTALL)) {
-                ruleDao.deleteHandledRules(event.getDeploymentId());
+                //ruleDao.deleteHandledRules(event.getDeploymentId());
             } else {
                 // we drop the rule (no retry, no loop)
                 updateFact(event, RuleTriggerStatus.DROPPED);

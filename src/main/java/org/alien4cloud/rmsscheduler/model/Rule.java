@@ -15,11 +15,9 @@ import org.elasticsearch.annotation.Id;
 @Getter
 @Setter
 @ToString
-@ESObject
 @NoArgsConstructor
 public class Rule {
 
-    @Id
     private String id;
     
     private String environmentId;

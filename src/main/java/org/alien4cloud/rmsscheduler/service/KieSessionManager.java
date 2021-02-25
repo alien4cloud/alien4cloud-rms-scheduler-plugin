@@ -1,13 +1,19 @@
 package org.alien4cloud.rmsscheduler.service;
 
+import alien4cloud.deployment.DeploymentRuntimeStateService;
 import alien4cloud.deployment.DeploymentService;
 import alien4cloud.events.AlienEvent;
 import alien4cloud.events.BeforeDeploymentUndeployedEvent;
-import alien4cloud.events.DeploymentCreatedEvent;
+import alien4cloud.events.DeploymentRecoveredEvent;
 import alien4cloud.model.deployment.Deployment;
+import alien4cloud.model.deployment.DeploymentTopology;
+import alien4cloud.paas.IPaaSCallback;
+import alien4cloud.paas.exception.OrchestratorDisabledException;
+import alien4cloud.paas.model.DeploymentStatus;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 import org.alien4cloud.rmsscheduler.RMSPluginConfiguration;
-import org.alien4cloud.rmsscheduler.dao.RuleDao;
 import org.alien4cloud.rmsscheduler.dao.SessionDao;
 import org.alien4cloud.rmsscheduler.dao.SessionHandler;
 import org.alien4cloud.rmsscheduler.model.Rule;
@@ -16,6 +22,10 @@ import org.alien4cloud.rmsscheduler.model.RuleTriggerStatus;
 import org.alien4cloud.rmsscheduler.model.TickTocker;
 import org.alien4cloud.rmsscheduler.service.actions.CancelWorkflowAction;
 import org.alien4cloud.rmsscheduler.service.actions.LaunchWorkflowAction;
+import org.alien4cloud.rmsscheduler.utils.Const;
+import org.alien4cloud.rmsscheduler.utils.KieUtils;
+import org.alien4cloud.tosca.model.templates.PolicyTemplate;
+import org.alien4cloud.tosca.utils.TopologyNavigationUtil;
 import org.apache.lucene.util.NamedThreadFactory;
 import org.kie.api.KieBase;
 import org.kie.api.builder.Message;
@@ -28,18 +38,19 @@ import org.kie.api.event.rule.ObjectUpdatedEvent;
 import org.kie.api.runtime.KieSession;
 import org.kie.internal.utils.KieHelper;
 import org.springframework.context.ApplicationListener;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import javax.inject.Inject;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * In charge of :
@@ -67,8 +78,8 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
     @Inject
     private DeploymentService deploymentService;
 
-    @Resource
-    private RuleDao ruleDao;
+    @Inject
+    private DeploymentRuntimeStateService deploymentRuntimeStateService;
 
     @Resource
     private RMSPluginConfiguration pluginConfiguration;
@@ -80,6 +91,7 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
 
     @PostConstruct
     public void init() {
+        // If this plugin is started after orchestrator plugin, we must init session with active deployments
         this.recoverKieSessions();
         this.schedulerService = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("rms-rules-scheduler"));
 
@@ -117,23 +129,41 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
     }
 
     /**
-     * Recovery : get rules from persistence and init sessions.
+     * This will be called at init. If the orchestrator plugin starts first, we will init sessions. Else, the sessions will
+     * be initialized by {@link #onDeploymentRecoveredEvent(DeploymentRecoveredEvent)}.
      */
     private void recoverKieSessions() {
-        // TODO: should be done before YorcProvider : changes in Yorc recovery could impact rules
-        Collection<Rule> initRules = this.ruleDao.listHandledRules();
-        Map<String, List<Rule>> initRulesPerDeployment = initRules.stream()
-                .collect(Collectors.groupingBy(Rule::getDeploymentId));
-        initRulesPerDeployment.forEach((deploymentId, rules) -> {
-            log.info("Init KIE session for deployment {} using {} rules", deploymentId, rules.size());
-            initKieSession(deploymentId, rules);
-            ruleDao.create(deploymentId, rules);
-        });
+        Deployment[] activeDeployments = this.deploymentService.getActiveDeployments();
+        log.info("Recovering {} deployments", activeDeployments.length);
+        for (Deployment deployment : activeDeployments) {
+            try {
+                deploymentRuntimeStateService.getDeploymentStatus(deployment, new IPaaSCallback<DeploymentStatus>() {
+                    @Override
+                    public void onSuccess(DeploymentStatus data) {
+                        log.info("Deployment {} status is {}", deployment.getId(), data);
+                        if (data == DeploymentStatus.DEPLOYED) {
+                            prepareKieSession(deployment.getId());
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Throwable throwable) {
+
+                    }
+                });
+            } catch(OrchestratorDisabledException e) {
+                log.warn("Plugin is not yet enabled, let's init sessions by listening for DeploymentRecoveredEvent");
+            }
+        }
     }
 
     // should manage n rule per session (1 session = 1 deployment, n policies)
-    private void initKieSession(String deploymentId, Collection<Rule> rules) {
+    private synchronized void initKieSession(String deploymentId, Collection<Rule> rules) {
 
+        if (sessionDao.get(deploymentId) != null) {
+            log.warn("Session already exist for deployment {}", deploymentId);
+            return;
+        }
         KieHelper kieHelper = ruleGenerator.buildKieHelper(rules);
 
         Results results = kieHelper.verify();
@@ -141,6 +171,9 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
         if (results.hasMessages(Message.Level.ERROR)) {
             log.warn("Rule generation error !");
         }
+        Map<String, Rule> rulesMap = Maps.newHashMap();
+        rules.forEach(rule -> rulesMap.put(rule.getId(), rule));
+
 
         KieBase kieBase = kieHelper.build(EventProcessingOption.STREAM);
         KieSession kieSession = kieBase.newKieSession();
@@ -149,6 +182,7 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
         SessionHandler sessionHandler = new SessionHandler();
         sessionHandler.setId(deploymentId);
         sessionHandler.setSession(kieSession);
+        sessionHandler.setRules(rulesMap);
         sessionHandler.setTicktockerHandler(kieSession.insert(new TickTocker()));
         sessionDao.create(sessionHandler);
     }
@@ -187,9 +221,9 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
                 launchWorkflowAction.execute(r, sessionHandler, event.getFactHandle());
             } else if (r.getStatus() == RuleTriggerStatus.TIMEOUT) {
                 // Cancel running execution only if option cancel_on_timeout is set
-                Optional<Rule> rule = ruleDao.getHandledRule(r.getRuleId());
+                Rule rule = sessionHandler.getRules().get(r.getRuleId());
                 log.debug("Rule found: {}", rule);
-                if (rule.isPresent() && rule.get().isCancelOnTimeout()) {
+                if (rule.isCancelOnTimeout()) {
                     log.info("Cancel execution {}", r.getExecutionId());
                     cancelWorkflowAction.execute(r, sessionHandler, event.getFactHandle());
                 }
@@ -206,28 +240,31 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
 
     public synchronized void onApplicationEvent(AlienEvent alienEvent) {
         log.debug("AlienEvent of type {} occured : {}", alienEvent.getClass(), alienEvent);
-        if (alienEvent instanceof DeploymentCreatedEvent) {
-            onDeploymentCreatedEvent((DeploymentCreatedEvent)alienEvent);
-        } else if (alienEvent instanceof BeforeDeploymentUndeployedEvent) {
+        if (alienEvent instanceof BeforeDeploymentUndeployedEvent) {
             onDeploymentUndeployedEvent((BeforeDeploymentUndeployedEvent)alienEvent);
+        } else if (alienEvent instanceof DeploymentRecoveredEvent) {
+            onDeploymentRecoveredEvent((DeploymentRecoveredEvent)alienEvent);
+        }
+    }
+
+    public synchronized void prepareKieSession(String deploymentId) {
+        Deployment deployment = deploymentService.get(deploymentId);
+        DeploymentTopology deploymentTopology = deploymentRuntimeStateService.getRuntimeTopologyFromEnvironment(deployment.getEnvironmentId());
+        Set<PolicyTemplate> policies = TopologyNavigationUtil.getPoliciesOfType(deploymentTopology, Const.POLICY_TYPE, true);
+        if (!policies.isEmpty()) {
+            Set<Rule> ruleSet = Sets.newHashSet();
+            for (PolicyTemplate policy : policies) {
+                ruleSet.add(KieUtils.buildRuleFromPölicy(deployment.getEnvironmentId(), deploymentId, policy));
+            }
+            initKieSession(deploymentId, ruleSet);
         }
     }
 
     /**
-     * The deployment has been created, just handle rules prepared by modifier init a KIE session.
+     * The deployment has been recovered after system startup, init a KIE session.
      */
-    private void onDeploymentCreatedEvent(DeploymentCreatedEvent deploymentCreatedEvent) {
-        log.debug("Deployment created {}", deploymentCreatedEvent.getDeploymentId());
-        Deployment deployment = deploymentService.get(deploymentCreatedEvent.getDeploymentId());
-        Collection<Rule> rules = this.ruleDao.handleRules(deployment.getEnvironmentId(), deployment.getId());
-    }
-
-    public void initKieSession(String deploymentId) {
-        log.debug("Init KIE session for deployment {}", deploymentId);
-        Collection<Rule> rules = this.ruleDao.listHandledRules(deploymentId);
-        if (!rules.isEmpty()) {
-            initKieSession(deploymentId, rules);
-        }
+    private void onDeploymentRecoveredEvent(DeploymentRecoveredEvent deploymentRecoveredEvent) {
+        prepareKieSession(deploymentRecoveredEvent.getDeploymentId());
     }
 
     // TODO: session should only be paused, then delete after undeployed has been successful
@@ -238,7 +275,7 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
             sessionHandler.getSession().halt();
             sessionHandler.getSession().dispose();
             sessionDao.delete(sessionHandler);
-            ruleDao.deleteHandledRules(deploymentUndeployedEvent.getDeploymentId());
+            //ruleDao.deleteHandledRules(deploymentUndeployedEvent.getDeploymentId());
         }
     }
 

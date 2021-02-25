@@ -25,7 +25,7 @@ policy_types:
         description: Timer expression that defines schedule rules (each hour...).
         type: string
         required: true
-        default: "0 0/5 * * * ?"
+        #default: "0 0/5 * * * ?"
       timer_type:
         description: |
           Timer type according to Drools documentation (cron, int ...).
@@ -34,41 +34,41 @@ policy_types:
         required: true
         constraints:
           - valid_values: [cron, int]
-        default: cron
+        #default: cron
       duration:
         description: Duration of the time window ex 5m or 4h or 1d, or even 2h10m30s.
         type: string
         required: true
-        default: 0s
+        #default: 0s
       retry_on_error:
         description: Defines if the workflow should be retried after error.
         type: boolean
-        default: false
+        #default: false
         required: true
       loop:
         description: Reschedule even if success (but only during the time window).
         type: boolean
-        default: false
+        #default: false
         required: true
       delay:
         description: The minimum delay beetween reschedules (after error or while looping), ex 30s or 10m or 2h.
         type: string
-        default: 10s
+        #default: 10s
         required: true
       max_run:
         description: Max run count (in case of error and retry_on_error or loop mode). -1 (default) means no limit.
         type: integer
-        default: -1
+        #default: -1
         required: true
       only_one_running:
         description: Defines if only one workflow should be executed at a given time (no overlap when true).
         type: boolean
-        default: true
+        #default: true
         required: true
       cancel_on_timeout:
         description: Defines if we must cancel a running workflow if time window elapsed.
         type: boolean
-        default: false
+        #default: false
         required: true
       conditions:
         description: |
@@ -77,6 +77,11 @@ policy_types:
         required: false
         entry_schema:
           type: string
+      workflow_name:
+        description: |
+          The name of the workflow to launch.
+        type: string
+        required: true
     metadata:
       # pluginId:pluginBean:phase
       a4c_policy_impl: alien4cloud-rms-scheduler-plugin:rms-scheduler-modifier:post-policy-match

@@ -254,7 +254,7 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
         if (!policies.isEmpty()) {
             Set<Rule> ruleSet = Sets.newHashSet();
             for (PolicyTemplate policy : policies) {
-                ruleSet.add(KieUtils.buildRuleFromPölicy(deployment.getEnvironmentId(), deploymentId, policy));
+                ruleSet.add(KieUtils.buildRuleFromPolicy(deployment.getEnvironmentId(), deploymentId, policy));
             }
             initKieSession(deploymentId, ruleSet);
         }

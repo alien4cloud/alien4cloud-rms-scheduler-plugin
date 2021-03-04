@@ -33,7 +33,7 @@ public class KieUtils {
         session.update(factHandle, ruleTrigger);
     }
 
-    public static Rule buildRuleFromPölicy(String environmentId, String deploymentId, PolicyTemplate policy) {
+    public static Rule buildRuleFromPolicy(String environmentId, String deploymentId, PolicyTemplate policy) {
         Rule rule = new Rule();
         rule.setId(environmentId + "_" + policy.getName());
         rule.setEnvironmentId(environmentId);
@@ -43,9 +43,18 @@ public class KieUtils {
         rule.setRetryOnError(Boolean.valueOf(PropertyUtil.getScalarValue(policy.getProperties().get("retry_on_error"))));
         rule.setOnlyOneRunning(Boolean.valueOf(PropertyUtil.getScalarValue(policy.getProperties().get("only_one_running"))));
         rule.setLoop(Boolean.valueOf(PropertyUtil.getScalarValue(policy.getProperties().get("loop"))));
-        rule.setDuration(TimeUtils.parseTimeString(PropertyUtil.getScalarValue(policy.getProperties().get("duration"))));
-        rule.setDelay(TimeUtils.parseTimeString(PropertyUtil.getScalarValue(policy.getProperties().get("delay"))));
-        rule.setMaxRun(Integer.parseInt(PropertyUtil.getScalarValue(policy.getProperties().get("max_run"))));
+        String duration = PropertyUtil.getScalarValue(policy.getProperties().get("duration"));
+        if (duration != null) {
+            rule.setDuration(TimeUtils.parseTimeString(duration));
+        }
+        String delay = PropertyUtil.getScalarValue(policy.getProperties().get("delay"));
+        if (delay != null) {
+            rule.setDelay(TimeUtils.parseTimeString(delay));
+        }
+        String max_run = PropertyUtil.getScalarValue(policy.getProperties().get("max_run"));
+        if (max_run != null) {
+            rule.setMaxRun(Integer.parseInt(max_run));
+        }
         rule.setCancelOnTimeout(Boolean.valueOf(PropertyUtil.getScalarValue(policy.getProperties().get("cancel_on_timeout"))));
         rule.setAction(PropertyUtil.getScalarValue(policy.getProperties().get("workflow_name")));
         ListPropertyValue conditions = (ListPropertyValue)policy.getProperties().get("conditions");

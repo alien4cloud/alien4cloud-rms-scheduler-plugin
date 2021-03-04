@@ -51,7 +51,7 @@ public class RMSSchedulerModifier extends TopologyModifierSupport {
         String environmentId = context.getEnvironmentContext().get().getEnvironment().getId();
 
         for (PolicyTemplate policy : policies) {
-            Rule rule = KieUtils.buildRuleFromPölicy(environmentId, null, policy);
+            Rule rule = KieUtils.buildRuleFromPolicy(environmentId, null, policy);
             log.debug("Rule created: {}", rule);
             if (ruleGenerator.verify(policy.getName(), rule, context.getLog())) {
                 context.getLog().info("Rule prepared for policy " + policy.getName());

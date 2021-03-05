@@ -84,4 +84,4 @@ policy_types:
         required: true
     metadata:
       # pluginId:pluginBean:phase
-      a4c_policy_impl: alien4cloud-rms-scheduler-plugin:rms-scheduler-modifier:post-policy-match
+      a4c_policy_impl: alien4cloud-rms-scheduler-plugin:rms-scheduler-modifier:post-matched-policy-setup

@@ -39,7 +39,6 @@ alien4cloud-rms-scheduler-plugin:
 
 # How-to
 
-Add the **RMS Scheduler Modifier** to your location at **post-policy-match** phase.
 Create a topology using simple mocks and add one or several **RMSScheduleWorkflowPolicy** to your topology (or use [this one](src/test/resources/csar/sample.yml)).
 
 ## Quick start

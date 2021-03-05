@@ -10,6 +10,7 @@ import alien4cloud.model.deployment.DeploymentTopology;
 import alien4cloud.paas.IPaaSCallback;
 import alien4cloud.paas.exception.OrchestratorDisabledException;
 import alien4cloud.paas.model.DeploymentStatus;
+import alien4cloud.tosca.context.ToscaContext;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
@@ -250,6 +251,7 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
     public synchronized void prepareKieSession(String deploymentId) {
         Deployment deployment = deploymentService.get(deploymentId);
         DeploymentTopology deploymentTopology = deploymentRuntimeStateService.getRuntimeTopologyFromEnvironment(deployment.getEnvironmentId());
+        ToscaContext.init(deploymentTopology.getDependencies());
         Set<PolicyTemplate> policies = TopologyNavigationUtil.getPoliciesOfType(deploymentTopology, Const.POLICY_TYPE, true);
         if (!policies.isEmpty()) {
             Set<Rule> ruleSet = Sets.newHashSet();

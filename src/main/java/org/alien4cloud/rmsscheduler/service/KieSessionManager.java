@@ -252,13 +252,17 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
         Deployment deployment = deploymentService.get(deploymentId);
         DeploymentTopology deploymentTopology = deploymentRuntimeStateService.getRuntimeTopologyFromEnvironment(deployment.getEnvironmentId());
         ToscaContext.init(deploymentTopology.getDependencies());
-        Set<PolicyTemplate> policies = TopologyNavigationUtil.getPoliciesOfType(deploymentTopology, Const.POLICY_TYPE, true);
-        if (!policies.isEmpty()) {
-            Set<Rule> ruleSet = Sets.newHashSet();
-            for (PolicyTemplate policy : policies) {
-                ruleSet.add(KieUtils.buildRuleFromPolicy(deployment.getEnvironmentId(), deploymentId, policy));
+        try {
+            Set<PolicyTemplate> policies = TopologyNavigationUtil.getPoliciesOfType(deploymentTopology, Const.POLICY_TYPE, true);
+            if (!policies.isEmpty()) {
+                Set<Rule> ruleSet = Sets.newHashSet();
+                for (PolicyTemplate policy : policies) {
+                    ruleSet.add(KieUtils.buildRuleFromPolicy(deployment.getEnvironmentId(), deploymentId, policy));
+                }
+                initKieSession(deploymentId, ruleSet);
             }
-            initKieSession(deploymentId, ruleSet);
+        } finally {
+            ToscaContext.destroy();
         }
     }
 

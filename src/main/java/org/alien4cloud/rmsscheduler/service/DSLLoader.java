@@ -61,7 +61,7 @@ public class DSLLoader {
                     log.info("Adding DSL from classpath ressource {} : {}", filePath, content);
                     dslFilesContent.add(content);
                 }
-            } catch (IOException ioe) {
+            } catch (Exception ioe) {
                 log.error("Can't read DSL at {}, ignoring", filePath);
             }
         });

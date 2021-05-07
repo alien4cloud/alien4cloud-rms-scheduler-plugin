@@ -72,6 +72,13 @@
             <artifactId>quartz</artifactId>
             <version>${quartz.version}</version>
         </dependency-->
+
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpasyncclient</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
     </dependencies>
 
     <scm>

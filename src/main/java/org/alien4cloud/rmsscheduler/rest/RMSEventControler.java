@@ -3,6 +3,7 @@ package org.alien4cloud.rmsscheduler.rest;
 import lombok.extern.slf4j.Slf4j;
 import org.alien4cloud.rmsscheduler.dao.SessionDao;
 import org.alien4cloud.rmsscheduler.model.MetricEvent;
+import org.alien4cloud.rmsscheduler.service.RMSEventPublisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,17 +19,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class RMSEventControler {
 
     @Autowired
-    private SessionDao sessionDao;
+    private RMSEventPublisher rmsEventPublisher;
 
     /**
      * When an event is published, it is broadcast to every KIE sessions.
      */
     @RequestMapping(value = "/publish/{eventLabel}/{eventValue}", method = RequestMethod.PUT, produces = "application/json")
-    public void publishEvent(@PathVariable String eventLabel, @PathVariable Long eventValue) {
+    public void publishEvent(@PathVariable String eventLabel, @PathVariable String eventValue) {
         MetricEvent m = new MetricEvent(eventLabel, eventValue);
-        sessionDao.list().forEach(sessionHandler -> {
-            sessionHandler.getSession().insert(m);
-        });
+        rmsEventPublisher.publishEvent(m);
     }
 
 }

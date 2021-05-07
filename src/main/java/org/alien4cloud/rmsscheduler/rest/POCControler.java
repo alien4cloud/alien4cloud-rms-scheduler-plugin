@@ -232,14 +232,14 @@ public class POCControler {
         return sb.toString();
     }
 
-    @RequestMapping(value = "/addEvent/{sessionId}/{eventLabel}/{eventValue}", method = RequestMethod.PUT, produces = "application/json")
-    public void addEvent(@PathVariable String sessionId, @PathVariable String eventLabel, @PathVariable Long eventValue) {
+/*    @RequestMapping(value = "/addEvent/{sessionId}/{eventLabel}/{eventValue}", method = RequestMethod.PUT, produces = "application/json")
+    public void addEvent(@PathVariable String sessionId, @PathVariable String eventLabel, @PathVariable String eventValue) {
         SessionHandler sessionHandler = sessionDao.get(sessionId);
         if (sessionHandler != null) {
             MetricEvent m = new MetricEvent(eventLabel, eventValue);
             sessionHandler.getSession().insert(m);
         }
-    }
+    }*/
 
     @RequestMapping(value = "/verify", method = RequestMethod.POST, produces = "application/json")
     public RestResponse<Results> verify(@RequestBody String sentence) {

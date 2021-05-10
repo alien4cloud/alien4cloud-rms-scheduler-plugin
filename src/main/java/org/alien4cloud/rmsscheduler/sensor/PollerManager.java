@@ -8,8 +8,6 @@ import org.alien4cloud.rmsscheduler.sensor.prometeus.PrometeusPoller;
 import org.alien4cloud.rmsscheduler.sensor.zabbix.ZabbixPoller;
 import org.alien4cloud.rmsscheduler.service.RMSEventPublisher;
 import org.apache.lucene.util.NamedThreadFactory;
-import org.springframework.cloud.context.environment.EnvironmentChangeEvent;
-import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;

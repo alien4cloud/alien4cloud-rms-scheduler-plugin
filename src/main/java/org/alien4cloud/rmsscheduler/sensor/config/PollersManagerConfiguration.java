@@ -5,7 +5,6 @@ import lombok.Setter;
 import org.alien4cloud.rmsscheduler.RMSPluginConfiguration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;

@@ -33,15 +33,17 @@ public class PollerManager {
 
     @PostConstruct
     public void init() {
-        this.schedulerService = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("rms-poller-scheduler"));
-        log.info("In the plugin configurator with config: {}", configuration);
-        configuration.getPollers().forEach((pollerName, pollerConfiguration) -> {
-            // instanciate poller
-            Poller poller = initPoller(pollerName, pollerConfiguration);
-            if (poller != null) {
-                pollers.put(pollerName, poller);
-            }
-        });
+        if (configuration.getPollers() != null) {
+            this.schedulerService = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("rms-poller-scheduler"));
+            log.info("In the plugin configurator with config: {}", configuration);
+            configuration.getPollers().forEach((pollerName, pollerConfiguration) -> {
+                // instanciate poller
+                Poller poller = initPoller(pollerName, pollerConfiguration);
+                if (poller != null) {
+                    pollers.put(pollerName, poller);
+                }
+            });
+        }
     }
 
     @PreDestroy

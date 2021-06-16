@@ -1,0 +1,43 @@
+
+- es_index: toscaelement
+  es_type: policytype
+  target_element_id: org.alien4cloud.rmsscheduling.policies.RMSScheduleWorkflowPolicy
+  target_property: cron_expression
+  suggestion_policy: Accept
+  complex_suggestions:
+    - value: "0 0/5 * * * ?"
+      description: "cron: Every 5 minutes"
+    - value: "5m"
+      description: "int: Every 5 minutes"
+    - value: "0 0/10 * * * ?"
+      description: "cron: Every 10 minutes"
+    - value: "0 10 12 * * ?"
+      description: "cron: Every day at 12:10"
+    - value: "0 0 * ? * *"
+      description: "cron: Every 1 hour"
+    - value: "1h"
+      description: "int: Every 1 hour"
+    - value: "1h30m"
+      description: "int: Every 1 hour 30 minutes"
+    - value: "0 0 12 ? * SUN,SAT"
+      description: "cron: Every Saturday and Sunday at noon"
+    - value: "0 0 12 ? JAN,JUN *"
+      description: "cron: Every day at noon in January and June"
+    - value: "1d"
+      description: "int: Every day"
+
+- es_index: toscaelement
+  es_type: policytype
+  target_element_id: org.alien4cloud.rmsscheduling.policies.RMSScheduleWorkflowPolicy
+  target_property: workflow_name
+  suggestion_policy: Strict
+  suggestion_hook_plugin: alien4cloud-rms-scheduler-plugin:workflow-suggestion-provider
+
+- es_index: toscaelement
+  es_type: policytype
+  target_element_id: org.alien4cloud.rmsscheduling.policies.RMSScheduleWorkflowPolicy
+  target_property: conditions
+  suggestion_policy: Accept
+  # Optional: delegate call to a plugin bean
+  suggestion_hook_plugin: alien4cloud-rms-scheduler-plugin:rule-condition-suggestion-provider
+

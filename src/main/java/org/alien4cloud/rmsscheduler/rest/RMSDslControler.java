@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.alien4cloud.rmsscheduler.dao.DSLDao;
 import org.alien4cloud.rmsscheduler.dao.SessionDao;
 import org.alien4cloud.rmsscheduler.model.MetricEvent;
+import org.alien4cloud.rmsscheduler.service.DSLParser;
 import org.alien4cloud.rmsscheduler.service.RuleGenerator;
 import org.kie.api.builder.Message;
 import org.kie.api.builder.Results;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -29,6 +31,9 @@ public class RMSDslControler {
 
     @Autowired
     private RuleGenerator ruleGenerator;
+
+    @Resource
+    private DSLParser dslParser;
 
     /**
      *
@@ -47,7 +52,13 @@ public class RMSDslControler {
         RestResponseBuilder builder = RestResponseBuilder.<List<Message>> builder().data(messages);
         if (messages.isEmpty()) {
             // NO error messages we can save the DSL
-            dslDao.saveAdminDsl(dslContent);
+            try {
+                dslParser.parseDsl(dslContent);
+                dslDao.saveAdminDsl(dslContent);
+            } catch (DSLParser.DSLParserException e) {
+                builder.error(new RestError(0, "Not able to parse DSL"));
+            }
+
         } else {
             builder.error(new RestError(0, "Not able to parse DSL"));
         }

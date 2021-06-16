@@ -1,7 +1,6 @@
 package org.alien4cloud.rmsscheduler.rest;
 
 import lombok.extern.slf4j.Slf4j;
-import org.alien4cloud.rmsscheduler.dao.SessionDao;
 import org.alien4cloud.rmsscheduler.model.MetricEvent;
 import org.alien4cloud.rmsscheduler.service.RMSEventPublisher;
 import org.springframework.beans.factory.annotation.Autowired;

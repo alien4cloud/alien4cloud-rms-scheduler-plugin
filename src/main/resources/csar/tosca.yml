@@ -21,11 +21,6 @@ policy_types:
       A scheduled and rule based workflow policy trigger.
       You can define a time window during which an action can be execucted, if conditions are mets.
     properties:
-      cron_expression:
-        description: "Timer expression that defines schedule rules (each 5 minutes : 0 0/5 * * * ?)."
-        type: string
-        required: true
-        #default: "0 0/5 * * * ?"
       timer_type:
         description: |
           Timer type according to Drools documentation (cron, int ...).
@@ -35,10 +30,17 @@ policy_types:
         constraints:
           - valid_values: [cron, int]
         default: cron
+      cron_expression:
+        description: "Timer expression that defines schedule rules (each 5 minutes : 0 0/5 * * * ?)."
+        type: string
+        required: true
+        #default: "0 0/5 * * * ?"
       duration:
         description: Duration of the time window ex 5m or 4h or 1d, or even 2h10m30s.
         type: string
         required: true
+        constraints:
+          - pattern: ^([+-])?((\d+)[Dd])?((\d+)[Hh])?\s*((\d+)[Mm])?\s*((\d+)[Ss])?$
         default: 0s
       retry_on_error:
         description: Defines if the workflow should be retried after error.
@@ -54,6 +56,8 @@ policy_types:
         description: The minimum delay beetween reschedules (after error or while looping), ex 30s or 10m or 2h.
         type: string
         default: 10s
+        constraints:
+          - pattern: ^([+-])?((\d+)[Dd])?((\d+)[Hh])?\s*((\d+)[Mm])?\s*((\d+)[Ss])?$
         required: true
       max_run:
         description: Max run count (in case of error and retry_on_error or loop mode). -1 (default) means no limit.

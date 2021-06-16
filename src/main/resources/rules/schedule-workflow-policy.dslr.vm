@@ -7,8 +7,6 @@ import org.alien4cloud.rmsscheduler.model.TickTocker
 import java.util.Date
 import java.util.Calendar
 
-expander drools-poc.dsl
-
 rule "$rule.id: Schedule"
     salience 10
     timer ( $rule.timerType: $rule.timerExpression )
@@ -58,7 +56,7 @@ rule "$rule.id: Retry"
 
 rule "$rule.id: Loop"
     salience 10
-    // "retryOnError" value
+    // "loop" value
     enabled $rule.loop
 	when
         A trigger with window in DONE exists with id $rule.id

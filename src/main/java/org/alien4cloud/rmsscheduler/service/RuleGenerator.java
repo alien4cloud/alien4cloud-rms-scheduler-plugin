@@ -35,11 +35,15 @@ public class RuleGenerator {
     @Resource
     private DSLLoader dslLoader;
 
+    @Resource
+    private DSLParser dslParser;
+
     @Autowired
     private DSLDao dslDao;
 
     private String ruleCompileDrl;
-    private String ruleCompileDsl;
+    private String ruleCompileBuiltinDsl;
+    private String ruleCompileDefaultDsl;
 
     @PostConstruct
     public void init() throws IOException {
@@ -50,9 +54,19 @@ public class RuleGenerator {
         VelocityUtil.generate("rules/schedule-workflow-main.drl.vm", writer, velocityCtx);
         this.ruleCompileDrl = writer.toString();
         log.info("Will use this main DRL : {}", this.ruleCompileDrl);
-        // TODO: should load embeded DSLs
-
-        this.ruleCompileDsl = KieUtils.loadResource("rules/schedule-workflow.dsl");
+        // load embeded DSLs
+        this.ruleCompileBuiltinDsl = KieUtils.loadResource("rules/schedule-workflow-builtin.dsl");
+        this.ruleCompileDefaultDsl = KieUtils.loadResource("rules/schedule-workflow-default.dsl");
+        try {
+            dslParser.parseDsl(this.ruleCompileDefaultDsl);
+        } catch (DSLParser.DSLParserException e) {
+            log.warn("Not able to parse default DSL", e);
+        }
+        try {
+            dslParser.parseDsl(dslDao.getConcatenatedDsl());
+        }catch (DSLParser.DSLParserException e) {
+            log.warn("Not able to parse stored DSL", e);
+        }
     }
 
     private String generateRule(Rule rule) {
@@ -74,10 +88,11 @@ public class RuleGenerator {
     }
 
     public KieHelper buildKieHelper(Collection<Rule> rules) {
+
         KieHelper kieHelper = new KieHelper();
         kieHelper.addContent(ruleCompileDrl, ResourceType.DRL);
-        // We need to name the DSL since it's referenced in DSLR
-        kieHelper.addContent(ruleCompileDsl, "drools-poc.dsl");
+        kieHelper.addContent(ruleCompileBuiltinDsl, ResourceType.DSL);
+        kieHelper.addContent(ruleCompileDefaultDsl, ResourceType.DSL);
         dslLoader.getDSLs().forEach(dslContent -> {
             kieHelper.addContent(dslContent, ResourceType.DSL);
         });

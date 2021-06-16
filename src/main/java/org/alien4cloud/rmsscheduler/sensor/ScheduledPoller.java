@@ -5,9 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.alien4cloud.rmsscheduler.model.MetricEvent;
 import org.alien4cloud.rmsscheduler.sensor.config.PollerConfiguration;
 import org.alien4cloud.rmsscheduler.service.RMSEventPublisher;
-import org.apache.lucene.util.NamedThreadFactory;
 
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 

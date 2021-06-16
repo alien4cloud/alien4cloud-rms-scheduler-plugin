@@ -211,7 +211,7 @@ Once a time window has been defined for a trigger (using the schedule properties
 Basically, aims of conditions is to evaluate events of type [MetricEvent](src/main/java/org/alien4cloud/rmsscheduler/model/MetricEvent.java).
 A MetricEvent is something with a name, a value and a date (events are timestamped). An event represents a measure of the health of your system at a given date.
 
-Conditions are expressed using statements that are builtin with the plugin (See [DSL](src/main/resources/rules/schedule-workflow.dsl)). At this time, the following sentences are available :
+Conditions are expressed using statements that are builtin with the plugin (See [DSL](src/main/resources/rules/schedule-workflow-default.dsl)). At this time, the following sentences are available :
 
 Statement | 
 ------------ |

@@ -2,12 +2,13 @@ package org.alien4cloud.rmsscheduler.sensor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.alien4cloud.rmsscheduler.model.MetricEvent;
-import org.alien4cloud.rmsscheduler.sensor.config.AggregationFunction;
 import org.alien4cloud.rmsscheduler.sensor.config.PollerItemConfiguration;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
@@ -20,6 +21,11 @@ import org.apache.http.nio.conn.ssl.SSLIOSessionStrategy;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
+import org.springframework.expression.EvaluationException;
+import org.springframework.expression.Expression;
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.ParseException;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.http.client.HttpComponentsAsyncClientHttpRequestFactory;
 import org.springframework.web.client.AsyncRestTemplate;
 
@@ -40,6 +46,8 @@ public abstract class HttpPoller extends ScheduledPoller {
     protected AsyncRestTemplate template;
 
     private CloseableHttpAsyncClient httpclient;
+
+    private Map<String, Expression> expressionCache = Maps.newHashMap();
 
     @Getter
     @Setter
@@ -96,31 +104,22 @@ public abstract class HttpPoller extends ScheduledPoller {
         return asyncHttpClient;
     }
 
-    protected MetricEvent aggregate(MetricEvent agregatedEvent, MetricEvent metricEvent, AggregationFunction aggregationFunction) {
-        if (metricEvent.getDoubleValue() == null) {
-            return agregatedEvent;
-        }
-        if (agregatedEvent.getDoubleValue() == null) {
-            agregatedEvent.setDoubleValue(metricEvent.getDoubleValue());
-        } else {
-            switch(aggregationFunction) {
-                case min:
-                    agregatedEvent.setDoubleValue(Double.min(agregatedEvent.getDoubleValue(), metricEvent.getDoubleValue()));
-                    break;
-                case max:
-                    agregatedEvent.setDoubleValue(Double.max(agregatedEvent.getDoubleValue(), metricEvent.getDoubleValue()));
-                    break;
-                case sum:
-                case avg:
-                    agregatedEvent.setDoubleValue(Double.sum(agregatedEvent.getDoubleValue(), metricEvent.getDoubleValue()));
-                    break;
+    private Expression getTransformSpringELExpression(String itemName, PollerItemConfiguration itemConfig) {
+        Expression expression = null;
+        if (StringUtils.isNotEmpty(itemConfig.getTransform())) {
+            expression = expressionCache.get(itemName);
+            if (expression == null) {
+                ExpressionParser parser = new SpelExpressionParser();
+                try {
+                    expression = parser.parseExpression(itemConfig.getTransform());
+                    expressionCache.put(itemName, expression);
+                } catch(ParseException pe) {
+                    log.warn("Not able to parse Spel <{}> for item <{}>", itemConfig.getTransform(), itemName);
+                    itemConfig.setTransform(null);
+                }
             }
         }
-        if (metricEvent.getTimestamp().after(agregatedEvent.getTimestamp())) {
-            // use the most recent timestamp for event timestamp
-            agregatedEvent.setTimestamp(metricEvent.getTimestamp());
-        }
-        return agregatedEvent;
+        return expression;
     }
 
     protected MetricEvent buildMetricEvent(String itemName, Calendar lastClockCalendar, String valueAsString, PollerItemConfiguration itemConfig, Map<String, ?> mappedItem) {
@@ -139,10 +138,29 @@ public abstract class HttpPoller extends ScheduledPoller {
         metricEvent.setLabel(itemName);
         metricEvent.setTimestamp(lastClockCalendar.getTime());
         metricEvent.setValue(valueAsString);
-        try {
-            metricEvent.setDoubleValue(Double.parseDouble(valueAsString));
-        } catch(NumberFormatException nfe) {
-            // Not an error
+
+        boolean shouldTryToConvertAsDouble = true;
+        Expression exp = getTransformSpringELExpression(itemName, itemConfig);
+        if (exp != null) {
+            try {
+                Object transformedValue = exp.getValue(new TransformEvaluationContext(valueAsString));
+                if (transformedValue instanceof Double) {
+                    metricEvent.setDoubleValue((Double)transformedValue);
+                } else {
+                    metricEvent.setValue(transformedValue.toString());
+                }
+                shouldTryToConvertAsDouble = false;
+            } catch(EvaluationException ee) {
+                log.warn("Not able to transform value <{}> using Spel <{}> for item <{}>", valueAsString, itemConfig.getTransform(), itemName);
+            }
+        }
+
+        if (shouldTryToConvertAsDouble) {
+            try {
+                metricEvent.setDoubleValue(Double.parseDouble(valueAsString));
+            } catch(NumberFormatException nfe) {
+                // Not an error
+            }
         }
         if (itemConfig.getTags() != null) {
             itemConfig.getTags().forEach((resultEntryName, tagName) -> {
@@ -170,6 +188,10 @@ public abstract class HttpPoller extends ScheduledPoller {
         }
     }
 
-
+    @Getter
+    @AllArgsConstructor
+    private static class TransformEvaluationContext {
+        private String value;
+    }
 
 }

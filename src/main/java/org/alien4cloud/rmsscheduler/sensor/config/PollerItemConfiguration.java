@@ -18,8 +18,9 @@ import java.util.Map;
 @ToString
 public class PollerItemConfiguration {
 
-    //private String name;
-
+    /**
+     * When several results are returned for an item, you can use an aggregation function : avg, sum, min, or max.
+     */
     private AggregationFunction aggregationFunction;
 
     private String request;
@@ -30,8 +31,15 @@ public class PollerItemConfiguration {
     private Integer ttl;
 
     /**
-     * A map of tags to get from the zabbix item result. Key is the result entry to consider, value is the name of teh tag.
+     * A map of tags to get from the zabbix item result. Key is the result entry to consider, value is the name of the tag.
      */
     private Map<String, String> tags;
+
+    /**
+     * A Spring expression language than can transform the string value to something else.
+     * The text value is available in the the context as 'value', so an example could be : "T(Double).parseDouble(value) / 1000" to parse and divide per 1000
+     * If the result is a Double, it is used to set MetricEvent.doubleValue
+     */
+    private String transform;
 
 }

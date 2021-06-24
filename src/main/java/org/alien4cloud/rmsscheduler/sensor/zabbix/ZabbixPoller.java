@@ -1,5 +1,6 @@
 package org.alien4cloud.rmsscheduler.sensor.zabbix;
 
+import alien4cloud.utils.SpringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -9,6 +10,7 @@ import org.alien4cloud.rmsscheduler.sensor.HttpPoller;
 import org.alien4cloud.rmsscheduler.sensor.PollerResponseHandler;
 import org.alien4cloud.rmsscheduler.sensor.config.PollerItemConfiguration;
 import org.alien4cloud.rmsscheduler.sensor.zabbix.model.*;
+import org.alien4cloud.tosca.variable.SpelExpressionProcessor;
 import org.springframework.http.*;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;

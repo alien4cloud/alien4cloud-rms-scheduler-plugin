@@ -8,6 +8,9 @@ import org.alien4cloud.rmsscheduler.sensor.config.PollerItemConfiguration;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * Responsible of managing aggregations when multiple results found in an sensor response.
+ */
 @Slf4j
 public class PollerResponseHandler {
 
@@ -25,11 +28,15 @@ public class PollerResponseHandler {
                     if (itemConfig.getAggregationFunction() != null) {
                         itemCount++;
                         if (itemCount == 1) {
+                            // this is the first result just store it in aggregatedEvent
                             aggregatedEvent = metricEvent;
                         } else {
+                            // for others, call aggregate
                             aggregatedEvent = aggregate(aggregatedEvent, metricEvent, itemConfig.getAggregationFunction());
                         }
                     } else {
+                        // several results but no aggregation function, each result is published
+                        // in this case, the config may define tags to segregate events
                         metricCallback.handleMetricEvent(metricEvent);
                     }
                 }
@@ -46,8 +53,6 @@ public class PollerResponseHandler {
                 }
                 aggregatedEvent.setTags(null);
                 metricCallback.handleMetricEvent(aggregatedEvent);
-            } else {
-                log.warn("Many results but no aggregation function, ignoring");
             }
         }
 

@@ -118,37 +118,4 @@ public class ConditionsSuggestionProvider implements ISimpleSuggestionPluginProv
         }
     }
 
-    // TODO: write unit test
-    public static void main(String... args) {
-
-        ConditionsSuggestionProvider conditionsSuggestionProvider = new ConditionsSuggestionProvider();
-
-        String dsl = "Le dernier \"{metric_label}\" connu est {operator} {metric_value}";
-        conditionsSuggestionProvider.addDSL(dsl, "");
-        conditionsSuggestionProvider.addDSL("Le dernier \"{metric_label}\" connu est compris entre {metric_value} et {metric_value}", "");
-        MetricEvent metricEvent = new MetricEvent();
-        metricEvent.setLabel("toto");
-        metricEvent.setValue("2130");
-        conditionsSuggestionProvider.addMetricEvent(metricEvent);
-        conditionsSuggestionProvider.compileSuggestions();
-        //Collection<String> suggestions = conditionsSuggestionProvider.getSuggestions();
-        //suggestions.forEach(s -> System.out.println(s));
-
-/*        Matcher matcher = DSL_PATTERN.matcher(dsl);
-        System.out.println("" + matcher.matches());
-        Set<String> matches = Sets.newHashSet();
-        while (matcher.find()) {
-            String g = matcher.group(1);
-            System.out.printf("Adding group %s", g).println("");
-            matches.add(g);
-        }
-        if (matches.contains(DslToken.OPERATOR.label)) {
-
-        }
-
-        if (matcher.matches()) {
-            System.out.printf("%d", matcher.groupCount()).println("");
-            System.out.println(matcher.group(1));
-        }*/
-    }
 }

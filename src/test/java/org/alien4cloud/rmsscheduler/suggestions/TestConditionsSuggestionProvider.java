@@ -26,10 +26,6 @@ public class TestConditionsSuggestionProvider {
 
         conditionsSuggestionProvider.addDSL("Le dernier \"{metric_label}\" connu est {operator} {metric_value}", "");
         conditionsSuggestionProvider.addDSL("Le dernier \"{metric_label}\" connu est compris entre {metric_value} et {metric_value}", "");
-//        MetricEvent metricEvent = new MetricEvent();
-//        metricEvent.setLabel("toto");
-//        metricEvent.setValue("0.010");
-//        conditionsSuggestionProvider.addMetricEvent(metricEvent);
         Collection<String> suggestions = conditionsSuggestionProvider.getSuggestions("", new SuggestionRequestContext());
         // 6 operators, 2 phrase (1 without operator)  -> 7 suggestions
         Assert.assertEquals(8, suggestions.size());
@@ -61,4 +57,20 @@ public class TestConditionsSuggestionProvider {
         Assert.assertTrue(suggestions.contains("Le dernier toto connu est <= 0.010"));
         Assert.assertTrue(suggestions.contains("Le dernier toto connu est >= 0.010"));
     }
+
+    @Test
+    public void test_1_phrases_1_metric_double() {
+        ConditionsSuggestionProvider conditionsSuggestionProvider = new ConditionsSuggestionProvider();
+
+        conditionsSuggestionProvider.addDSL("Le dernier {metric_label} connu est égal à {metric_value}", "");
+        MetricEvent metricEvent = new MetricEvent();
+        metricEvent.setLabel("toto");
+        metricEvent.setValue("0.010");
+        metricEvent.setDoubleValue(Double.valueOf("0.011"));
+        conditionsSuggestionProvider.addMetricEvent(metricEvent);
+        Collection<String> suggestions = conditionsSuggestionProvider.getSuggestions("", new SuggestionRequestContext());
+        Assert.assertEquals(2, suggestions.size());
+        Assert.assertTrue(suggestions.contains("Le dernier toto connu est égal à 0.011"));
+    }
+
 }

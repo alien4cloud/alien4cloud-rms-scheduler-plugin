@@ -92,8 +92,9 @@ public class ConditionsSuggestionProvider implements ISimpleSuggestionPluginProv
         }
         if (!metricLabels.isEmpty()) {
             metricLabels.forEach((l, metricEvent) -> {
+                String metricValue = (metricEvent.getDoubleValue() != null) ? metricEvent.getDoubleValue().toString() : metricEvent.getValue();
                 if (matches.contains(DslToken.METRIC_LABEL.label)) {
-                    String sentence = left.replaceAll(DslToken.METRIC_LABEL.pattern, l).replaceAll(DslToken.METRIC_VALUE.pattern, metricEvent.getValue());
+                    String sentence = left.replaceAll(DslToken.METRIC_LABEL.pattern, l).replaceAll(DslToken.METRIC_VALUE.pattern, metricValue);
                     generateOperatorSentences(sentence, result);
                 } else if (matches.contains(DslToken.METRIC_VALUE.label)) {
                     // we have a value but no label, let's parse the code to identify a MetricEvent label
@@ -102,7 +103,7 @@ public class ConditionsSuggestionProvider implements ISimpleSuggestionPluginProv
                         // replace the value using the one found in MetricEvent
                         String metricLabel = rightMatcher.group(1);
                         if (metricLabel.equals(l)) {
-                            String sentence = left.replaceAll(DslToken.METRIC_VALUE.pattern, metricEvent.getValue());
+                            String sentence = left.replaceAll(DslToken.METRIC_VALUE.pattern, metricValue);
                             generateOperatorSentences(sentence, result);
                         }
                     }

@@ -48,6 +48,15 @@ public class TestHttpPoller {
         Assert.assertEquals(Double.valueOf(56.124767), metricEvent.getDoubleValue());
     }
 
+    @Test
+    public void testBuildMetricEvent_transform_round() {
+        PollerItemConfiguration config = getPollerItemConfiguration();
+        config.setTransform("T(Double).parseDouble(T(Long).toString(T(Math).round(T(Double).parseDouble(value) * 100))) / 100");
+        MetricEvent metricEvent = voidHttpPoller.buildMetricEvent("test", Calendar.getInstance(), "0.541991148188354", config, Maps.newHashMap());
+        Assert.assertNotNull(metricEvent);
+        Assert.assertEquals(Double.valueOf(0.54), metricEvent.getDoubleValue());
+    }
+
     private PollerItemConfiguration getPollerItemConfiguration() {
         PollerItemConfiguration config = new PollerItemConfiguration();
         config.setTtl(30);

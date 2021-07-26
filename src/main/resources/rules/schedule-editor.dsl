@@ -7,6 +7,6 @@
 #[when]Le dernier "{metric_label}" connu est {operator} à {metric_value}=
 #Number( doubleValue {operator} {metric_value} ) from accumulate
 #(
-#    MetricEvent(label == "{metric_label}", $value : value) over window:length(1),
+#    MetricEvent(label == "{metric_label}", $value : doubleValue) over window:length(1),
 #    average($value)
 #)

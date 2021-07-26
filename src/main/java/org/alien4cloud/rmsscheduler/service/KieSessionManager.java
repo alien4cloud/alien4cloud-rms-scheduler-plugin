@@ -108,6 +108,7 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
 
     @PreDestroy
     public void destroy() {
+        log.info("Context is shutting down, stop KIE sessions heartbeat");
         this.schedulerService.shutdown();
     }
 

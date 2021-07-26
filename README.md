@@ -318,6 +318,10 @@ Please not that the DSL editor will detect DSL parsing error but will **not vali
 > If you remove or change a sentence that is used by an existing application, it's rules can become invalid and in this case, the application can not be deployed anymore.
 > Unless you know exactly what you are doing, you should never delete or update sentences.
 
+# Builtin poller
+
+This plugin provides 2 built-in poller that can fetch data from monitoring systems and inject MetricEvent in Drools sessions.
+
 # TODO
 
 - DSL editor

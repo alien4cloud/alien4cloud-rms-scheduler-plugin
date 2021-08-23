@@ -1,7 +1,65 @@
 {
   "RMS_SCHEDULER" : {
-    "MENU": "Règles de déclenchement",
-    "DESCRIPTION": "Cet editeur vous permet d'enrichir le DSL pour le moteur de règles.",
-    "ERRORS_EXIST": "Des erreurs ont été trouvées dans le DSL, réglez les problèmes et sauvegardez à nouveau !"
+    "DSL_EDITOR": {
+      "MENU": "Scheduler rules",
+      "DESCRIPTION": "Cet editeur vous permet d'enrichir le DSL pour le moteur de règles.",
+      "ERRORS_EXIST": "Des erreurs ont été trouvées dans le DSL, réglez les problèmes et sauvegardez à nouveau !"
+    },
+    "MONITOR": {
+      "MENU": "Règles",
+      "NoSession" : {
+        "Title": "Pas de session de règles pour ce déploiement",
+        "Content": "Aucune session de règles n'a été identifiée pour ce déploiement, cette topologie n'a probablement pas de politique basée sur des règles !"
+      }
+    },
+    "Rule": {
+      "Duration" : "Durée",
+      "Delay": "Délai",
+      "Conditions": "Conditions",
+      "options": "Options",
+      "loop": "Boucle",
+      "retryOnError": "Rejeu en cas d'erreur",
+      "onlyOneRunning": "1 seule execution simultanée",
+      "cancelOnTimeout": "Annuler en cas de dépassement"
+    },
+    "TimelineAction": {
+      "name": "Workflow",
+      "startTime": "Début",
+      "endTime": "Fin",
+      "state": "Statut",
+      "logs": "Journaux",
+      "title": " (cliquez pour plus de details)"
+    },
+    "TimelineActionState": {
+      "TRIGGERED": "Programmé",
+      "RUNNING": "En cours",
+      "DONE": "Succès",
+      "ERROR": "Echec",
+      "CANCELLED": "Annulée"
+    },
+    "TimelineRuleConditionEvent": {
+      "values": {
+        "passed": {
+          "true": "La condition est vérifiée",
+          "false": "La condition n'est pas vérifiée"
+        }
+      }
+    },
+    "TimelineEvent": {
+      "title": {
+        "SCHEDULED": "Programmé"
+      }
+    },
+    "Timeline": {
+      "Tools": {
+        "refresh": "Actualiser",
+        "toggleFollowTime": "(dés)activer le suivi d'horloge",
+        "autoRefreshPeriod": "Période de rafraichissement",
+        "resetMonitor": "Réinitialiser",
+        "displayEventInfo": "Afficher le détail des evênements (ou pas)",
+        "displayPassedConditionsEvents": "Afficher tous les évênement de condition, y compris les conditions vérifiées (ou pas)",
+        "displayTriggerEvents": "Afficher tous les évênements de déclenchement (ou pas)"
+      }
+    }
   }
 }

@@ -1,0 +1,158 @@
+//@import "../bower_components/vis/dist/vis.css";
+
+//$fa-font-path: "../bower_components/font-awesome/fonts" !default;
+//@import "font-awesome/scss/fontawesome";
+
+//$icon-font-path: "../bower_components/bootstrap-sass-official/assets/fonts/bootstrap/";
+//$fa-font-path: "../bower_components/font-awesome/fonts" !default;
+//@import "font-awesome/scss/font-awesome";
+
+.timeline-waiting {
+  cursor: wait !important;
+  //background-color: lightgoldenrodyellow;
+}
+
+.rmstimeline {
+  width: 800px;
+  height: 300px;
+}
+
+.vis-item .vis-item-overflow {
+  overflow: visible;
+}
+
+.vis-box.TimelineRuleConditionEvent {
+  background-color: #f5f4ed !important;
+  border-color: #9d9d9d !important;
+}
+
+.TimelineRuleConditionEvent_false {
+  color: #c7254e !important;
+  font-size: smaller;
+  //background-color: #fcfcfc !important;
+}
+.TimelineRuleConditionEvent_true {
+  color: #3e8f3e !important;
+  font-size: smaller;
+  //background-color: #fcfcfc !important;
+}
+
+.vis-dot .TimelineRuleConditionEvent_false {
+  background-color: #c7254e !important;
+}
+.vis-dot .TimelineRuleConditionEvent_true {
+  background-color: #3e8f3e !important;
+}
+
+.vis-point > .vis-item-content {
+  margin-left: 0px !important;
+}
+
+.vis-item.vis-point > .vis-item-content {
+  //margin-left: -8px !important;
+  padding-left: 0px !important;
+}
+
+.vis-item.vis-dot {
+  display: none;
+}
+
+.vis-item.vis-point {
+  font-size: medium !important;
+}
+
+.vis-item.vis-point.TriggerEvent {
+  font-size: x-small !important;
+  margin-top: -15px;
+}
+
+.TimelineActionState {
+  margin-top: -4px !important;
+}
+// Color of TimelineAction boxes
+.TimelineActionState_DONE {
+  background-color: #c1e2b3 !important;
+}
+.TimelineActionState_RUNNING {
+  background-color: #fff785 !important;
+}
+.TimelineActionState_ERROR {
+  background-color: #dca7a7 !important;
+}
+.TimelineActionState_CANCELLED {
+  background-color: #f0ad4e !important;
+}
+
+.tl_window {
+  background-color: #cfd8e6 !important;
+  height: 30px !important;
+  // we always want the timeline action over the timeline window
+  z-index: -100 !important;
+}
+
+.tl_window.tl_window_true {
+  background-color: #efefef !important;
+  border-style: dashed !important;
+  height: 30px !important;
+  // we always want the timeline action over the timeline window
+  z-index: -100 !important;
+}
+
+.vis-tooltip {
+  font-size: x-small !important;
+}
+
+.timeline {
+  padding-top: 10px;
+}
+
+.timelineInfoLabel {
+  text-align: right;
+  color: #4D4D4D;
+  font-weight: lighter;
+  font-size: x-small;
+}
+
+.timelineInfoValue {
+  font-size: x-small;
+  font-weight: bolder;
+  margin-left: -25px;
+}
+
+.space-up {
+  padding-top: 10px;
+}
+
+.infos {
+  font-size: small;
+  border-color: #9d9d9d;
+  background-color: #efefef;
+  border-style: solid;
+  border-radius: 5px;
+  border-width: 1px;
+  height: 150px;
+  padding: 3px;
+  margin: 3px;
+}
+
+.info-box {
+  padding-left: 3px;
+  padding-right: 3px;
+}
+
+.info-box-title {
+  font-size: medium;
+}
+
+.rule-conditions {
+  overflow: auto;
+  height: 40px;
+  font-size: x-small;
+  margin-left: -25px;
+}
+
+.refresh-rate {
+  float: left;
+  width: auto;
+  height: 30px;
+}

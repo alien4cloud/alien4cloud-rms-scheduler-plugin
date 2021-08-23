@@ -1,0 +1,217 @@
+<div class="row space-up">
+    <div class="col-md-4" class="info-box">
+        <div class="infos">
+            <div class="center info-box-title">
+                <select ng-if="rules.length > 0"
+                        name="secret_rule"
+                        id="secret_rule"
+                        ng-model="selectedRuleIdx"
+                        ng-init="selectedRuleIdx = '0'"
+                        ng-change="selectRule(selectedRuleIdx)">
+                    <option ng-repeat="rule in rules" value="{{rule.idx}}" ng-selected="rule.id == currentRule.id">{{rule.name}}</option>
+                </select>
+            </div>
+            <div ng-if="currentRule" class="space-up">
+                <div class="row">
+                    <div class="col-md-3 timelineInfoLabel">
+                        {{currentRule.timerType}}:
+                    </div>
+                    <div class="col-md-3 timelineInfoValue">
+                        {{currentRule.timerExpression}}
+                    </div>
+                    <div class="col-md-3 timelineInfoLabel">
+                        {{ 'RMS_SCHEDULER.Rule.Delay' | translate }}:
+                    </div>
+                    <div class="col-md-3 timelineInfoValue">
+                        {{currentRule.delay | amDurationFormat : 'millisecond'}} ({{currentRule.delay/1000}}s)
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 timelineInfoLabel">
+                        {{ 'RMS_SCHEDULER.Rule.Duration' | translate }}:
+                    </div>
+                    <div class="col-md-3 timelineInfoValue">
+                        {{currentRule.duration | amDurationFormat : 'millisecond'}} ({{currentRule.duration/1000}}s)
+                    </div>
+                    <div class="col-md-3 timelineInfoLabel">
+                        {{ 'RMS_SCHEDULER.Rule.options' | translate }}:
+                    </div>
+                    <div class="col-md-3 timelineInfoValue">
+                        <i class="fa fa-retweet"
+                           ng-class="{'text-success' : currentRule.loop}"
+                           uib-tooltip="{{'RMS_SCHEDULER.Rule.loop' | translate }}">
+                        </i>
+                        <i class="fa fa-wrench"
+                           ng-class="{'text-success' : currentRule.retryOnError}"
+                           uib-tooltip="{{'RMS_SCHEDULER.Rule.retryOnError' | translate }}">
+                        </i>
+                        <i class="fa fa-hand-o-up"
+                           ng-class="{'text-success' : currentRule.onlyOneRunning}"
+                           uib-tooltip="{{'RMS_SCHEDULER.Rule.onlyOneRunning' | translate }}">
+                        </i>
+                        <i class="fa fa-hand-scissors-o"
+                           ng-class="{'text-success' : currentRule.cancelOnTimeout}"
+                           uib-tooltip="{{'RMS_SCHEDULER.Rule.cancelOnTimeout' | translate }}">
+                        </i>
+                    </div>
+                </div>
+                <div class="row" ng-if="currentRule.conditions && currentRule.conditions.length > 0">
+                    <div class="col-md-3 timelineInfoLabel">
+                        {{ 'RMS_SCHEDULER.Rule.Conditions' | translate }} ({{currentRule.conditions.length}}):
+                    </div>
+                    <div class="col-md-9 rule-conditions">
+                        <div ng-repeat="condition in currentRule.conditions"><i class="fa fa-check-circle"></i> {{ condition }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="col-md-4" class="info-box">
+
+        <div class="infos">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div id="timeline-option-button" class="btn-toolbar pull-left">
+                        <div class="btn-group">
+                            <button class="btn btn-default btn-xs"
+                                    ng-click="displayEventInfo = !displayEventInfo; refresh(); $event.stopPropagation()"
+                                    uib-tooltip="{{'RMS_SCHEDULER.Timeline.Tools.displayEventInfo' | translate }}"
+                                    tooltip-placement="top" tooltip-append-to-body="true">
+                                <i class="fa fa-tags"
+                                   ng-class="{'text-success' : displayEventInfo}">
+                                </i>
+                            </button>
+                            <button class="btn btn-default btn-xs"
+                                    ng-click="displayTriggerEvents = !displayTriggerEvents; refresh(); $event.stopPropagation()"
+                                    uib-tooltip="{{'RMS_SCHEDULER.Timeline.Tools.displayTriggerEvents' | translate }}"
+                                    tooltip-placement="top" tooltip-append-to-body="true">
+                                <i class="fa fa-flash"
+                                   ng-class="{'text-success' : displayTriggerEvents}">
+                                </i>
+                            </button>
+                            <button class="btn btn-default btn-xs"
+                                    ng-click="displayPassedConditionsEvents = !displayPassedConditionsEvents; refresh(); $event.stopPropagation()"
+                                    uib-tooltip="{{'RMS_SCHEDULER.Timeline.Tools.displayPassedConditionsEvents' | translate }}"
+                                    tooltip-placement="top" tooltip-append-to-body="true">
+                                <i class="fa fa-check-circle"
+                                   ng-class="{'text-success' : displayPassedConditionsEvents}">
+                                </i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="timeline-control-button" class="btn-toolbar pull-right">
+                        <div class="btn-group">
+                            <button class="btn btn-default btn-sm" ng-click="move(0.2); $event.stopPropagation()">
+                                <i class="fa fa-chevron-left"></i>
+                            </button>
+                            <button class="btn btn-default btn-sm" ng-click="move(-0.2); $event.stopPropagation()">
+                                <i class="fa fa-chevron-right"></i>
+                            </button>
+                            <button class="btn btn-default btn-sm" ng-click="zoomIn(); $event.stopPropagation()">
+                                <i class="fa fa-search-plus"></i>
+                            </button>
+                            <button class="btn btn-default btn-sm" ng-click="zoomOut(); $event.stopPropagation()">
+                                <i class="fa fa-search-minus"></i>
+                            </button>
+                            <button class="btn btn-sm btn-default"
+                                    ng-click="toggleFollowTime(); $event.stopPropagation()"
+                                    uib-tooltip="{{'RMS_SCHEDULER.Timeline.Tools.toggleFollowTime' | translate }}"
+                                    tooltip-placement="top" tooltip-append-to-body="true">
+                                <i class="fa fa-eye" ng-class="{'text-success' : followTime}"></i>
+                            </button>
+                            <button class="btn btn-sm btn-default"
+                                    ng-click="initPoller(); $event.stopPropagation()"
+                                    uib-tooltip="{{'RMS_SCHEDULER.Timeline.Tools.resetMonitor' | translate }}"
+                                    tooltip-placement="top" tooltip-append-to-body="true">
+                                <i class="fa fa-crosshairs"></i>
+                            </button>
+                            <select class="form-control no-browser-apparence refresh-rate"
+                                    ng-model="refreshRate"
+                                    ng-change="refresh()"
+                                    ng-options="rate.label for rate in refreshRates"
+                                    uib-tooltip="{{'RMS_SCHEDULER.Timeline.Tools.autoRefreshPeriod' | translate}}">
+                            </select>
+                            <button class="btn btn-sm btn-default"
+                                    ng-click="refresh()"
+                                    ng-disabled="polling; $event.stopPropagation()"
+                                    uib-tooltip="{{'RMS_SCHEDULER.Timeline.Tools.refresh' | translate }}"
+                                    tooltip-placement="top" tooltip-append-to-body="true">
+                                <i class="fa fa-refresh" ng-class="{'fa-spin': polling, 'text-success' : pollerActive} "></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row space-up">
+                <span class="col-lg-2"></span>
+                <date-time-form class="col-lg-8" field-name="APPLICATIONS.RUNTIME.LOG.FROM_DATE"
+                                on-date-time-set="setFromDate(newDate)"
+                                date-format="YYYY-MM-DD HH:mm:ss"></date-time-form>
+                <span class="col-lg-2"></span>
+            </div>
+            <div class="row space-up">
+                <span class="col-lg-2"></span>
+                <date-time-form class="col-lg-8" field-name="APPLICATIONS.RUNTIME.LOG.TO_DATE"
+                                on-date-time-set="setToDate(newDate)"
+                                date-format="YYYY-MM-DD HH:mm:ss"></date-time-form>
+                <span class="col-lg-2"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4" class="info-box">
+        <div class="infos">
+            <div ng-if="pinnedTimelineAction">
+                <div class="row">
+                    <div class="col-md-4 timelineInfoLabel">
+                        {{ 'RMS_SCHEDULER.TimelineAction.name' | translate }}:
+                    </div>
+                    <div class="col-md-8 timelineInfoValue info-box-title">
+                        {{pinnedTimelineAction.name}}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 timelineInfoLabel">
+                        {{ 'RMS_SCHEDULER.TimelineAction.startTime' | translate }}:
+                    </div>
+                    <div class="col-md-8 timelineInfoValue">
+                        {{pinnedTimelineAction.startTime | date:'medium'}}
+                    </div>
+                </div>
+                <div class="row" ng-if="pinnedTimelineAction.endTime">
+                    <div class="col-md-4 timelineInfoLabel">
+                        {{ 'RMS_SCHEDULER.TimelineAction.endTime' | translate }}:
+                    </div>
+                    <div class="col-md-8 timelineInfoValue">
+                        {{pinnedTimelineAction.endTime | date:'medium'}}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 timelineInfoLabel">
+                        {{ 'RMS_SCHEDULER.TimelineAction.state' | translate }}:
+                    </div>
+                    <div class="col-md-8 timelineInfoValue">
+                        {{ 'RMS_SCHEDULER.TimelineActionState.' + pinnedTimelineAction.state | translate}}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 timelineInfoLabel">
+                        {{ 'RMS_SCHEDULER.TimelineAction.logs' | translate }}:
+                    </div>
+                    <div class="col-md-8 timelineInfoValue">
+                        <i class="fa fa-newspaper-o clickable" ng-click="displayLogs(pinnedTimelineAction.executionId)"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div id="timeline" class="timeline">
+</div>
+
+
+

@@ -32,6 +32,7 @@ public class LaunchWorkflowAction implements RuleAction {
                     new IPaaSCallback<String>() {
                         @Override
                         public void onSuccess(String executionId) {
+                            log.debug("Launched workflow for {} executionId: {}", ruleTrigger.getRuleId(), executionId);
                             ruleTrigger.setExecutionId(executionId);
                             KieUtils.updateRuleTrigger(sessionHandler.getSession(), ruleTrigger, factHandle, RuleTriggerStatus.RUNNING);
                         }

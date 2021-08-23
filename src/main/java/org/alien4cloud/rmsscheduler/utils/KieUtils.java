@@ -36,6 +36,7 @@ public class KieUtils {
     public static Rule buildRuleFromPolicy(String environmentId, String deploymentId, PolicyTemplate policy) {
         Rule rule = new Rule();
         rule.setId(environmentId + "_" + policy.getName());
+        rule.setName(policy.getName());
         rule.setEnvironmentId(environmentId);
         rule.setDeploymentId(deploymentId);
         rule.setTimerType(PropertyUtil.getScalarValue(policy.getProperties().get("timer_type")));
@@ -58,14 +59,16 @@ public class KieUtils {
         rule.setCancelOnTimeout(Boolean.valueOf(PropertyUtil.getScalarValue(policy.getProperties().get("cancel_on_timeout"))));
         rule.setAction(PropertyUtil.getScalarValue(policy.getProperties().get("workflow_name")));
         ListPropertyValue conditions = (ListPropertyValue)policy.getProperties().get("conditions");
-        final StringBuilder conditionsBuilder = new StringBuilder();
+        String[] conditionsArr = new String[0];
         if (conditions != null && conditions.getValue() != null && !conditions.getValue().isEmpty()) {
-            conditions.getValue().forEach(o -> {
+            conditionsArr = new String[conditions.getValue().size()];
+            int i = 0;
+            for (Object o : conditions.getValue()) {
                 String r = o.toString();
-                conditionsBuilder.append("\r\n").append(r);
-            });
+                conditionsArr[i++] = r;
+            }
         }
-        rule.setConditions(conditionsBuilder.toString());
+        rule.setConditions(conditionsArr);
         return rule;
     }
 

@@ -1,41 +1,99 @@
 package rules
 
-import org.alien4cloud.rmsscheduler.model.RuleTrigger
-import org.alien4cloud.rmsscheduler.model.RuleTriggerStatus
-import org.alien4cloud.rmsscheduler.model.MetricEvent
-import org.alien4cloud.rmsscheduler.model.TickTocker
-import java.util.Date
-import java.util.Calendar
+##import org.alien4cloud.rmsscheduler.model.RuleTrigger
+##import org.alien4cloud.rmsscheduler.model.RuleTriggerStatus
+####import org.alien4cloud.rmsscheduler.model.RuleTriggerEvent
+####import org.alien4cloud.rmsscheduler.model.RuleTriggerEventState
+##import org.alien4cloud.rmsscheduler.model.MetricEvent
+##import org.alien4cloud.rmsscheduler.model.TickTocker
+##import java.util.Date
+##import java.util.Calendar
+##import java.util.List
 
+#set($maxSalience = 10 + ($rule.conditions.size() * 3) + 1)
 rule "$rule.id: Schedule"
-    salience 10
+    salience $maxSalience
     timer ( $rule.timerType: $rule.timerExpression )
 	when
-	    No scheduled trigger exists with id $rule.id
+	    //No scheduled trigger exists with id $rule.id
 	    // TODO: here insert scheduleConditions
 	then
-	    Schedule a trigger with id "$rule.id" for environment "$rule.environmentId" deployment "$rule.deploymentId" running "$rule.action" using a TTL of $rule.duration and a max of $rule.maxRun
+	    Schedule a trigger with id "$rule.id" for environment "$rule.environmentId" deployment "$rule.deploymentId" running "$rule.action" using a TTL of $rule.duration and a max of $rule.maxRun having $rule.conditions.size() conditions
 	end
 
-rule "$rule.id: Conditionnal trigger"
-    salience 5
-    activation-group "condition-trigger"
+#set($salience = $maxSalience - 1)
+rule "$rule.id: Reset remaining conditions"
+    salience $salience
+    //activation-group "condition-trigger"
+    //activation-group "condition-$velocityCount"
 	when
 	    // Only add if onlyOneRunning
 #if($rule.onlyOneRunning)
 	    No running execution with id $rule.id
 #end## if($rule.onlyOneRunning)
 	    A scheduled non expired trigger exists with id $rule.id
-        // Iterate over assertions
-$rule.conditions
+	then
+        Insert a new trigger heartbeat
+	end
+
+#foreach ($condition in $rule.conditions)
+#set($salience = $salience - 1)
+rule "$rule.id: Condition #$velocityCount ($condition)"
+    salience $salience
+	when
+	    A trigger heartbeat exists for rule "$rule.id"
+	    No condition event for condition #$velocityCount exists
+	    No failed condition event exists
+$condition
+
+	then
+        Decrement the trigger remaining conditions
+        Fire a condition event for condition #$velocityCount with value true
+	end
+
+#set($salience = $salience - 1)
+rule "$rule.id: Failed condition #$velocityCount ($condition)"
+    salience $salience
+	when
+        A trigger heartbeat exists for rule "$rule.id"
+        No condition event for condition #$velocityCount exists
+        No failed condition event exists
+
+	then
+        Fire a condition event for condition #$velocityCount with value false
+	end
+
+#set($salience = $salience - 1)
+rule "$rule.id: Test changed condition #$velocityCount ($condition)"
+    salience $salience
+	when
+        A trigger heartbeat exists for rule "$rule.id"
+        We detect several condition events for condition #$velocityCount
+        Condition event passed changed detected
+
+	then
+	    Fire a fake condition event
+	    Fire an event for condition #$velocityCount
+	end
+
+#end## foreach ($condition in $rule.conditions)
+
+#set($salience = $salience - 1)
+rule "$rule.id: Conditionnal trigger"
+    salience $salience
+    activation-group "condition-trigger"
+	when
+	    A trigger heartbeat without remaining conditions exists for rule "$rule.id"
+        A scheduled non expired trigger exists with id $rule.id
 
 	then
 	    Log "---- Trigger $rule.id -----"
         Fire the trigger
 	end
 
+#set($salience = $salience - 1)
 rule "$rule.id: Delete 0 time window"
-    salience 4
+    salience $salience
     activation-group "condition-trigger"
 	when
 		A scheduled no window trigger exists with id $rule.id
@@ -43,9 +101,9 @@ rule "$rule.id: Delete 0 time window"
 		Delete the trigger
 	end
 
+#set($salience = $salience - 1)
 rule "$rule.id: Retry"
-    salience 10
-    // "retryOnError" value
+    salience $maxSalience
     enabled $rule.retryOnError
 	when
         A trigger with window in ERROR exists with id $rule.id
@@ -55,8 +113,7 @@ rule "$rule.id: Retry"
 	end
 
 rule "$rule.id: Loop"
-    salience 10
-    // "loop" value
+    salience $maxSalience
     enabled $rule.loop
 	when
         A trigger with window in DONE exists with id $rule.id

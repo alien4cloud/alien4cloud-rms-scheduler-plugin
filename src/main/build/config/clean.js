@@ -9,5 +9,6 @@ module.exports = {
       src: ['.tmp', '<%= yeoman.dist %>/*', '!<%= yeoman.dist %>/.git*']
     }]
   },
-  server: '.tmp'
+  server: '.tmp',
+  bower: '<%= yeoman.dist %>/bower_components/*'
 }

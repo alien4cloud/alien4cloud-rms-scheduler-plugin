@@ -1,7 +1,60 @@
 {
   "RMS_SCHEDULER" : {
-    "MENU": "Scheduler rules",
-    "DESCRIPTION": "This editor allows you to edit additional DSL for rule engine.",
-    "ERRORS_EXIST": "Some errors have been found in DSL, please fix and save again !"
+    "DSL_EDITOR": {
+      "MENU": "Scheduler rules",
+      "DESCRIPTION": "This editor allows you to edit additional DSL for rule engine.",
+      "ERRORS_EXIST": "Some errors have been found in DSL, please fix and save again !"
+    },
+    "MONITOR": {
+      "MENU": "Rules",
+      "NoSession" : {
+        "Title": "No rule session for this deployment",
+        "Content": "Can not find a rule session related to this deployment, maybe the topology doesn't contain any rule based schedule policy !"
+      }
+    },
+    "Rule": {
+      "Duration" : "Duration",
+      "Delay": "Delay",
+      "Conditions": "Conditions",
+      "options": "Options",
+      "loop": "Loop",
+      "retryOnError": "Retry on error",
+      "onlyOneRunning": "Only 1 running",
+      "cancelOnTimeout": "Cancel on timeout"
+    },
+    "TimelineAction": {
+      "name": "Workflow",
+      "startTime": "Start time",
+      "endTime": "End time",
+      "state": "Status",
+      "logs": "Logs",
+      "title": " (click for details)"
+    },
+    "TimelineActionState": {
+      "TRIGGERED": "Scheduled",
+      "RUNNING": "Running",
+      "DONE": "Succeeded",
+      "ERROR": "Failed",
+      "CANCELLED": "Cancelled"
+    },
+    "TimelineRuleConditionEvent": {
+      "values": {
+        "passed": {
+          "true": "The condition is verified",
+          "false": "The condition is not verified"
+        }
+      }
+    },
+    "Timeline": {
+      "Tools": {
+        "refresh": "Refresh",
+        "toggleFollowTime": "(dis)able follow clock",
+        "autoRefreshPeriod": "Refresh period",
+        "resetMonitor": "Reset",
+        "displayEventInfo": "Toggle display condition events details",
+        "displayPassedConditionsEvents": "Toggle display all condition events (even passed)",
+        "displayTriggerEvents": "Toggle display all trigger events"
+      }
+    }
   }
 }

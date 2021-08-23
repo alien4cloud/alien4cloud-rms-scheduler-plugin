@@ -1,6 +1,6 @@
 <!-- Main view of the plugin ui -->
 <div>
-    {{'RMS_SCHEDULER.DESCRIPTION' | translate}}
+    {{'RMS_SCHEDULER.DSL_EDITOR.DESCRIPTION' | translate}}
 </div>
 <div style="margin-top:10px;">
     <div style="margin-left: 10px;">
@@ -10,7 +10,7 @@
                 content="editorContent"
                 disable="saving">
         </ace-save>
-        <span class="text-danger" ng-if="errorsExist">{{'RMS_SCHEDULER.ERRORS_EXIST' | translate}}</span>
+        <span class="text-danger" ng-if="errorsExist">{{'RMS_SCHEDULER.DSL_EDITOR.ERRORS_EXIST' | translate}}</span>
     </div>
     <div ng-model="editorContent.new" ui-ace="{mode: mode, useWrapMode: true, showGutter: true, readonly: false, onLoad : aceLoaded}" style="margin-top:10px; height: 400px;">
     </div>

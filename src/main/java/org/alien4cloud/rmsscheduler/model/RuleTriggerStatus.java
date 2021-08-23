@@ -14,6 +14,10 @@ public enum RuleTriggerStatus {
     ERROR,
     /** The rule was running, but the end of time window is reached. */
     TIMEOUT,
+    /** The rule was running, but the end of time window is reached. */
+    CANCELLED,
     /** The rule has not been triggered before it's expirationDate, it's cancelled. */
-    DROPPED
+    DROPPED,
+    /** Nothing more to do with this trigger, it has been deleted. */
+    DELETED
 }

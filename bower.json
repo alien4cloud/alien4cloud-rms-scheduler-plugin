@@ -2,7 +2,9 @@
   "name": "alien4cloud-rms-scheduler-plugin",
   "version": "3.0.0",
   "dependencies": {
-    "requirejs": "2.1.10"
+    "requirejs": "2.1.10",
+    "vis": "4.21.0"
   },
-  "devDependencies": {}
-}
+  "devDependencies": {
+    "font-awesome": "4.7.0"
+  }}

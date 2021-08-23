@@ -2,10 +2,15 @@ package rules
 
 import org.alien4cloud.rmsscheduler.model.RuleTrigger
 import org.alien4cloud.rmsscheduler.model.RuleTriggerStatus
+import org.alien4cloud.rmsscheduler.model.RuleTriggerHeartbeat
+import org.alien4cloud.rmsscheduler.model.timeline.TimelineRuleConditionEvent
+##import org.alien4cloud.rmsscheduler.model.RuleTriggerEvent
+##import org.alien4cloud.rmsscheduler.model.RuleTriggerEventState
 import org.alien4cloud.rmsscheduler.model.MetricEvent
 import org.alien4cloud.rmsscheduler.model.TickTocker
 import java.util.Date
 import java.util.Calendar
+import java.util.List
 
 declare MetricEvent
     @role( event )
@@ -19,8 +24,9 @@ declare TickTocker
     now : Date
 end
 declare RuleTrigger
-    @propertyReactive
+    //@propertyReactive
     status : RuleTriggerStatus
+    id: String
     ruleId: String
     environmentId: String
     deploymentId: String
@@ -31,6 +37,33 @@ declare RuleTrigger
     expirationTime: Date
     maxRun: int
     runCount: int
+    conditionsCount: int
+end
+declare RuleTriggerHeartbeat
+	@role( event )
+	//@propertyReactive
+    id: long
+    triggerId: String
+    deploymentId: String
+    ruleId: String
+    remainingConditionsCount: int
+end
+##declare RuleTriggerEvent
+##	@role( event )
+##	@timestamp( timestamp )
+##    triggerId: String
+##    deploymentId: String
+##    ruleId: String
+##    state: RuleTriggerEventState
+##    conditionIdx: int
+##    timestamp: long
+##end
+declare ConditionEvent
+	@role( event )
+    triggerId: String
+    heartbeatId: long
+    conditionIdx: int
+    passed: boolean
 end
 
 rule "Main: Cancel schedule rule"
@@ -59,15 +92,15 @@ rule "Main: Delete execution rule"
     salience 100
 	when
 	    $tickTocker: TickTocker()
-		$r: RuleTrigger(status != RuleTriggerStatus.RUNNING && status != RuleTriggerStatus.SCHEDULED, expirationDelay > 0 && $tickTocker.now > expirationTime)
+		$r: RuleTrigger(status != RuleTriggerStatus.RUNNING && status != RuleTriggerStatus.SCHEDULED && status != RuleTriggerStatus.TIMEOUT, expirationDelay > 0 && $tickTocker.now > expirationTime)
 	then
 		delete($r);
 	end
 
 rule "Main: Delete DONE or ERROR rule"
-    salience 1
+    salience -100
 	when
-		$r: RuleTrigger(status == RuleTriggerStatus.DONE || status == RuleTriggerStatus.ERROR)
+		$r: RuleTrigger(status == RuleTriggerStatus.DONE || status == RuleTriggerStatus.ERROR || status == RuleTriggerStatus.CANCELLED)
 	then
 		delete($r);
 	end

@@ -126,71 +126,71 @@ public class POCControler {
         return kieSession;
     }
 
-    @RequestMapping(value = "/createSesssion/{sessionId}", method = RequestMethod.PUT, produces = "application/json")
-    public void createSession(@PathVariable String sessionId) {
-        log.info("creating session " + sessionId);
-        KieSession kieSession = getSession();
-        //kieSession.addEventListener(new DebugRuleRuntimeEventListener());
-        kieSession.addEventListener(new DefaultRuleRuntimeEventListener() {
-            @Override
-            public void objectUpdated(final ObjectUpdatedEvent event) {
-                super.objectUpdated(event);
-                Object o = event.getObject();
-
-                if (o instanceof RuleTrigger) {
-                    log.info("object updated: {}", o.toString());
-                    final RuleTrigger r = (RuleTrigger)o;
-                    if (r.getStatus() == RuleTriggerStatus.TRIGGERED) {
-                        executorService.submit(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    long sleepTime = getRandomBeetween(2, 4) * 1000;
-                                    log.info("A4C will now '{}' for '{}' ({}) ... delay {}ms", r.getAction(), r.getRuleId(), r.getEnvironmentId(), sleepTime);
-                                    Thread.sleep(sleepTime);
-                                    r.setStatus(RuleTriggerStatus.RUNNING);
-                                    kieSession.update(event.getFactHandle(), r);
-
-                                    sleepTime = getRandomBeetween(120, 300) * 1000;
-                                    log.info("Doing '{}' for '{}' ... duration {}ms", r.getAction(), r.getRuleId(), sleepTime);
-                                    Thread.sleep(sleepTime);
-                                    if (r.getRuleId().endsWith("Err")) {
-                                        r.setStatus(RuleTriggerStatus.ERROR);
-                                    } else {
-                                        r.setStatus(RuleTriggerStatus.DONE);
-                                    }
-                                    kieSession.update(event.getFactHandle(), r);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        });
-                    }
-                }
-            }
-
-            @Override
-            public void objectInserted(ObjectInsertedEvent event) {
-                super.objectInserted(event);
-                Object o = event.getObject();
-                log.info("object inserted: {}", o.toString());
-            }
-
-            @Override
-            public void objectDeleted(ObjectDeletedEvent event) {
-                super.objectDeleted(event);
-                log.info("Object deleted: {}", event.getOldObject().toString());
-            }
-        });
-        log.info("Session created");
-        TickTocker tickTocker = new TickTocker();
-        SessionHandler sh = new SessionHandler();
-        sh.setId(sessionId);
-        sh.setSession(kieSession);
-        sh.setTicktockerHandler(kieSession.insert(tickTocker));
-
-        sessionDao.create(sh);
-    }
+//    @RequestMapping(value = "/createSesssion/{sessionId}", method = RequestMethod.PUT, produces = "application/json")
+//    public void createSession(@PathVariable String sessionId) {
+//        log.info("creating session " + sessionId);
+//        KieSession kieSession = getSession();
+//        //kieSession.addEventListener(new DebugRuleRuntimeEventListener());
+//        kieSession.addEventListener(new DefaultRuleRuntimeEventListener() {
+//            @Override
+//            public void objectUpdated(final ObjectUpdatedEvent event) {
+//                super.objectUpdated(event);
+//                Object o = event.getObject();
+//
+//                if (o instanceof RuleTrigger) {
+//                    log.info("object updated: {}", o.toString());
+//                    final RuleTrigger r = (RuleTrigger)o;
+//                    if (r.getStatus() == RuleTriggerStatus.TRIGGERED) {
+//                        executorService.submit(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                try {
+//                                    long sleepTime = getRandomBeetween(2, 4) * 1000;
+//                                    log.info("A4C will now '{}' for '{}' ({}) ... delay {}ms", r.getAction(), r.getRuleId(), r.getEnvironmentId(), sleepTime);
+//                                    Thread.sleep(sleepTime);
+//                                    r.setStatus(RuleTriggerStatus.RUNNING);
+//                                    kieSession.update(event.getFactHandle(), r);
+//
+//                                    sleepTime = getRandomBeetween(120, 300) * 1000;
+//                                    log.info("Doing '{}' for '{}' ... duration {}ms", r.getAction(), r.getRuleId(), sleepTime);
+//                                    Thread.sleep(sleepTime);
+//                                    if (r.getRuleId().endsWith("Err")) {
+//                                        r.setStatus(RuleTriggerStatus.ERROR);
+//                                    } else {
+//                                        r.setStatus(RuleTriggerStatus.DONE);
+//                                    }
+//                                    kieSession.update(event.getFactHandle(), r);
+//                                } catch (InterruptedException e) {
+//                                    e.printStackTrace();
+//                                }
+//                            }
+//                        });
+//                    }
+//                }
+//            }
+//
+//            @Override
+//            public void objectInserted(ObjectInsertedEvent event) {
+//                super.objectInserted(event);
+//                Object o = event.getObject();
+//                log.info("object inserted: {}", o.toString());
+//            }
+//
+//            @Override
+//            public void objectDeleted(ObjectDeletedEvent event) {
+//                super.objectDeleted(event);
+//                log.info("Object deleted: {}", event.getOldObject().toString());
+//            }
+//        });
+//        log.info("Session created");
+//        TickTocker tickTocker = new TickTocker();
+//        SessionHandler sh = new SessionHandler();
+//        sh.setId(sessionId);
+//        sh.setSession(kieSession);
+//        sh.setTicktockerHandler(kieSession.insert(tickTocker));
+//
+//        sessionDao.create(sh);
+//    }
 
     @RequestMapping(value = "/stopSesssion/{sessionId}", method = RequestMethod.DELETE, produces = "application/json")
     public void stopSession(@PathVariable String sessionId) {

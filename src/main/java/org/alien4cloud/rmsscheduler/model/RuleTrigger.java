@@ -3,10 +3,10 @@ package org.alien4cloud.rmsscheduler.model;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.drools.core.time.TimeUtils;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.UUID;
 
 /**
  * A RuleTrigger represents an instance of a scheduled rule.
@@ -18,6 +18,8 @@ import java.util.Date;
 @Setter
 @ToString
 public class RuleTrigger {
+
+    public String id;
 
     /**
      * Should be unique for a given deployment. environmentId_policyName is a good candidate.
@@ -43,7 +45,7 @@ public class RuleTrigger {
     private Date scheduleTime;
 
     /**
-     * End of the time window the workflow can be launched.
+     * Duration of the time window.
      */
     private long expirationDelay;
 
@@ -59,13 +61,25 @@ public class RuleTrigger {
 
     private int runCount = 0;
 
-    // TODO: change expirationDelai to long
-    public RuleTrigger(String ruleId, String environmentId, String deploymentId, String action, long expirationDelay, int maxRun) {
+    /**
+     * This is the number of conditions for the rule.
+     */
+    private int conditionsCount;
+
+//    /**
+//     * This is the number of remaining conditions that should be verified before really launching the trigger.
+//     */
+//    private int remainingConditionsCount;
+
+    public RuleTrigger(String ruleId, String environmentId, String deploymentId, String action, long expirationDelay, int maxRun, int conditionsCount) {
+        this.id = UUID.randomUUID().toString();
         this.ruleId = ruleId;
         this.environmentId = environmentId;
         this.deploymentId = deploymentId;
         this.action = action;
         this.maxRun = maxRun;
+        this.conditionsCount = conditionsCount;
+        //this.remainingConditionsCount = conditionsCount;
         // FIXME: quelque chose me fait penser que c'est pas à lui de faire ça
         // Utiliser l'expiration des events dans drools ?
         Calendar cal = Calendar.getInstance();
@@ -88,6 +102,7 @@ public class RuleTrigger {
         if (this.maxRun < 0 || this.runCount < this.maxRun) {
             // wa can schedule again
             this.status = RuleTriggerStatus.SCHEDULED;
+            //this.remainingConditionsCount = this.conditionsCount;
             Calendar cal = Calendar.getInstance();
             this.scheduleTime = new Date(cal.getTimeInMillis() + delay);
         } else {
@@ -98,5 +113,13 @@ public class RuleTrigger {
     public boolean isExpired(Date now) {
         return this.expirationDelay > 0 && this.expirationTime.before(now);
     }
+
+//    public void decrementRemainingConditions() {
+//        this.remainingConditionsCount--;
+//    }
+//
+//    public void resetRemainingConditions() {
+//        this.remainingConditionsCount = this.conditionsCount;
+//    }
 
 }

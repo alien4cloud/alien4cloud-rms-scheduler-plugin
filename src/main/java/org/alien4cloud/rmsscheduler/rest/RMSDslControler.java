@@ -4,9 +4,7 @@ import alien4cloud.rest.model.RestError;
 import alien4cloud.rest.model.RestResponse;
 import alien4cloud.rest.model.RestResponseBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.alien4cloud.rmsscheduler.dao.DSLDao;
-import org.alien4cloud.rmsscheduler.dao.SessionDao;
-import org.alien4cloud.rmsscheduler.model.MetricEvent;
+import org.alien4cloud.rmsscheduler.dao.RMSDao;
 import org.alien4cloud.rmsscheduler.service.DSLParser;
 import org.alien4cloud.rmsscheduler.service.RuleGenerator;
 import org.kie.api.builder.Message;
@@ -27,7 +25,7 @@ import java.util.List;
 public class RMSDslControler {
 
     @Autowired
-    private DSLDao dslDao;
+    private RMSDao rmsDao;
 
     @Autowired
     private RuleGenerator ruleGenerator;
@@ -41,7 +39,7 @@ public class RMSDslControler {
     @RequestMapping(method = RequestMethod.GET, produces = "application/json")
     @PreAuthorize("hasAuthority('ADMIN')")
     public RestResponse<String> getDsl() {
-        return RestResponseBuilder.<String> builder().data(dslDao.getAdminDsl().getContent()).build();
+        return RestResponseBuilder.<String> builder().data(rmsDao.getAdminDsl().getContent()).build();
     }
 
     @RequestMapping(method = RequestMethod.POST, produces = "application/json")
@@ -54,7 +52,7 @@ public class RMSDslControler {
             // NO error messages we can save the DSL
             try {
                 dslParser.parseDsl(dslContent);
-                dslDao.saveAdminDsl(dslContent);
+                rmsDao.saveAdminDsl(dslContent);
             } catch (DSLParser.DSLParserException e) {
                 builder.error(new RestError(0, "Not able to parse DSL"));
             }

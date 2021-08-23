@@ -5,7 +5,7 @@ import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 import org.alien4cloud.alm.deployment.configuration.flow.FlowExecutionLog;
 import org.alien4cloud.rmsscheduler.RMSPluginConfiguration;
-import org.alien4cloud.rmsscheduler.dao.DSLDao;
+import org.alien4cloud.rmsscheduler.dao.RMSDao;
 import org.alien4cloud.rmsscheduler.model.Rule;
 import org.alien4cloud.rmsscheduler.utils.KieUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -39,7 +39,7 @@ public class RuleGenerator {
     private DSLParser dslParser;
 
     @Autowired
-    private DSLDao dslDao;
+    private RMSDao rmsDao;
 
     private String ruleCompileDrl;
     private String ruleCompileBuiltinDsl;
@@ -63,7 +63,7 @@ public class RuleGenerator {
             log.warn("Not able to parse default DSL", e);
         }
         try {
-            dslParser.parseDsl(dslDao.getConcatenatedDsl());
+            dslParser.parseDsl(rmsDao.getConcatenatedDsl());
         }catch (DSLParser.DSLParserException e) {
             log.warn("Not able to parse stored DSL", e);
         }
@@ -96,7 +96,7 @@ public class RuleGenerator {
         dslLoader.getDSLs().forEach(dslContent -> {
             kieHelper.addContent(dslContent, ResourceType.DSL);
         });
-        kieHelper.addContent(dslDao.getConcatenatedDsl(), ResourceType.DSL);
+        kieHelper.addContent(rmsDao.getConcatenatedDsl(), ResourceType.DSL);
 
         for (Rule rule : rules) {
             String ruleText = generateRule(rule);

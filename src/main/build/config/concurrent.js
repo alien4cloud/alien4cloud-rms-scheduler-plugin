@@ -7,6 +7,6 @@ module.exports = {
   dist: [
     'compass:dist',
     // 'imagemin',
-    'svgmin'
+    //'svgmin'
   ]
 };

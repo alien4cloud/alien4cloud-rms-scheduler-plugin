@@ -1,13 +1,18 @@
 package org.alien4cloud.rmsscheduler.service;
 
+import alien4cloud.dao.model.GetMultipleDataResult;
 import alien4cloud.paas.IPaasEventListener;
 import alien4cloud.paas.IPaasEventService;
 import alien4cloud.paas.model.*;
+import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
+import org.alien4cloud.rmsscheduler.dao.RMSDao;
 import org.alien4cloud.rmsscheduler.dao.SessionDao;
 import org.alien4cloud.rmsscheduler.dao.SessionHandler;
 import org.alien4cloud.rmsscheduler.model.RuleTrigger;
 import org.alien4cloud.rmsscheduler.model.RuleTriggerStatus;
+import org.alien4cloud.rmsscheduler.model.timeline.TimelineAction;
+import org.alien4cloud.rmsscheduler.model.timeline.TimelineActionState;
 import org.alien4cloud.rmsscheduler.utils.KieUtils;
 import org.alien4cloud.tosca.normative.constants.NormativeWorkflowNameConstants;
 import org.kie.api.runtime.rule.FactHandle;
@@ -18,6 +23,8 @@ import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import javax.inject.Inject;
 import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
 
 /**
  * Listen to workflow change events and fire changes in KIE session if needed.
@@ -34,6 +41,9 @@ public class WorkflowListener {
 
     @Resource
     private KieSessionManager kieSessionManager;
+
+    @Resource
+    private RMSDao rmsDao;
 
     @PostConstruct
     public void init() {
@@ -58,6 +68,9 @@ public class WorkflowListener {
     };
 
     private void handleEvent(AbstractPaaSWorkflowMonitorEvent event) {
+        if (log.isDebugEnabled()) {
+            log.debug("AbstractPaaSWorkflowMonitorEvent received for executionId {}: {}", event.getExecutionId(), event.getClass().getSimpleName());
+        }
         if (event instanceof PaaSWorkflowStartedEvent) {
             if (event.getWorkflowId().equals(NormativeWorkflowNameConstants.UNINSTALL)) {
                 // TODO: stop the KIE session
@@ -81,7 +94,7 @@ public class WorkflowListener {
                 //ruleDao.deleteHandledRules(event.getDeploymentId());
             } else {
                 // we drop the rule (no retry, no loop)
-                updateFact(event, RuleTriggerStatus.DROPPED);
+                updateFact(event, RuleTriggerStatus.CANCELLED);
             }
         }
     }
@@ -102,11 +115,23 @@ public class WorkflowListener {
         );
         if (factHandles.isEmpty()) {
             log.debug("No handler found for executionId {}", event.getExecutionId());
+            // in some circumstances, we need to update TimelineAction directly
+            Map<String, String[]> filter = Maps.newHashMap();
+            filter.put("executionId", new String[] {event.getExecutionId()});
+            GetMultipleDataResult<TimelineAction> timelineActionResult = rmsDao.find(TimelineAction.class, filter, 10000);
+            for (TimelineAction timelineAction : timelineActionResult.getData()) {
+                timelineAction.setEndTime(new Date(event.getDate()));
+                TimelineActionState timelineActionState = TimelineActionState.valueOf(ruleTriggerStatus.name());
+                if (timelineActionState != null) {
+                    timelineAction.setState(TimelineActionState.valueOf(ruleTriggerStatus.name()));
+                }
+                rmsDao.save(timelineAction);
+            }
             return;
         }
         factHandles.forEach(factHandle -> {
             RuleTrigger ruleTrigger = (RuleTrigger)sessionHandler.getSession().getObject(factHandle);
-            ruleTrigger.setExecutionId(null);
+            //ruleTrigger.setExecutionId(null);
             KieUtils.updateRuleTrigger(sessionHandler.getSession(), ruleTrigger, factHandle, ruleTriggerStatus);
         });
     }

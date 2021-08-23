@@ -1,5 +1,8 @@
 'use strict';
 
+var os = require('os');
+os.tmpDir = os.tmpdir;
+
 module.exports = function(grunt) {
   // Load grunt tasks automatically
   require('load-grunt-tasks')(grunt);

@@ -42,6 +42,7 @@ public class ConditionsSuggestionProvider implements ISimpleSuggestionPluginProv
 
     private static final Pattern DSL_CODE_PATTERN = Pattern.compile("MetricEvent\\(\\s*label\\s*==\\s*\"(.*)\"");
 
+    // we should find a way to distinguish admin DSL that should not be additives
     private final Map<String, String> conditionDsls = Maps.newConcurrentMap();
 
     private final Map<String, MetricEvent> metricLabels = Maps.newConcurrentMap();

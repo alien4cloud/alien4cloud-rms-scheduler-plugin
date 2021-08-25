@@ -263,8 +263,8 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
         }
         if (o instanceof RuleTrigger) {
             log.debug("RuleTrigger updated in rule {}: {}", (event.getRule() == null) ? "Unknown" : event.getRule().getName(), o.toString());
-
             final RuleTrigger r = (RuleTrigger)o;
+            final String executionId = r.getExecutionId();
             SessionHandler sessionHandler = sessionDao.get(r.getDeploymentId());
             if (sessionHandler == null) {
                 log.warn("No session found for {}", r);
@@ -294,10 +294,10 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
                 case RUNNING:
                     // Start of the TimelineAction
                     TimelineAction timelineAction = new TimelineAction();
-                    timelineAction.setId(r.getExecutionId());
+                    timelineAction.setId(executionId);
                     timelineAction.setDeploymentId(r.getDeploymentId());
                     timelineAction.setRuleId(r.getRuleId());
-                    timelineAction.setExecutionId(r.getExecutionId());
+                    timelineAction.setExecutionId(executionId);
                     timelineAction.setStartTime(now);
                     timelineAction.setState(TimelineActionState.RUNNING);
                     timelineAction.setName(r.getAction());
@@ -305,27 +305,29 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
                     break;
                 case DONE:
                     // End of the TimelineAction
-                    timelineAction = this.rmsDao.findById(TimelineAction.class, r.getExecutionId());
+                    timelineAction = this.rmsDao.findById(TimelineAction.class, executionId);
                     if (timelineAction != null) {
                         timelineAction.setEndTime(now);
                         timelineAction.setState(TimelineActionState.DONE);
                         this.rmsDao.save(timelineAction);
                     } else {
                         // TODO Warn
+                        log.debug("Not able to find TimelineAction for execution {} to set it to {}", executionId, TimelineActionState.DONE);
                     }
                     break;
                 case ERROR:
                     //rte.setState(RuleTriggerEventState.ERROR);
                     // End of the TimelineAction
-                    if (r.getExecutionId() != null) {
+                    if (executionId != null) {
                         // error can occr
-                        timelineAction = this.rmsDao.findById(TimelineAction.class, r.getExecutionId());
+                        timelineAction = this.rmsDao.findById(TimelineAction.class, executionId);
                         if (timelineAction != null) {
                             timelineAction.setEndTime(now);
                             timelineAction.setState(TimelineActionState.ERROR);
                             this.rmsDao.save(timelineAction);
                         } else {
                             // TODO Warn
+                            log.debug("Not able to find TimelineAction for execution {} to set it to {}", executionId, TimelineActionState.ERROR);
                         }
                     }
                     break;
@@ -334,13 +336,13 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
                     Rule rule = sessionHandler.getRules().get(r.getRuleId());
                     log.debug("Rule found: {}", rule);
                     if (rule.isCancelOnTimeout()) {
-                        log.debug("Cancel execution {}", r.getExecutionId());
+                        log.debug("Cancel execution {}", executionId);
                         cancelWorkflowAction.execute(r, sessionHandler, event.getFactHandle());
                     }
                     break;
                 case CANCELLED:
                     // Cancel running execution only if option cancel_on_timeout is set
-                    timelineAction = this.rmsDao.findById(TimelineAction.class, r.getExecutionId());
+                    timelineAction = this.rmsDao.findById(TimelineAction.class, executionId);
                     // End of the TimelineAction
                     if (timelineAction != null) {
                         timelineAction.setEndTime(now);
@@ -348,6 +350,7 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
                         this.rmsDao.save(timelineAction);
                     } else {
                         // TODO Warn
+                        log.debug("Not able to find TimelineAction for execution {} to set it to {}", executionId, TimelineActionState.CANCELLED);
                     }
                     break;
                 case DROPPED:

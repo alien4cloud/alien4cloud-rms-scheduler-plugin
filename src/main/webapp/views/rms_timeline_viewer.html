@@ -177,7 +177,7 @@
                         {{ 'RMS_SCHEDULER.TimelineAction.startTime' | translate }}:
                     </div>
                     <div class="col-md-8 timelineInfoValue">
-                        {{pinnedTimelineAction.startTime | date:'medium'}}
+                        {{pinnedTimelineAction.startTime | amCalendar:referenceTime:formats}}
                     </div>
                 </div>
                 <div class="row" ng-if="pinnedTimelineAction.endTime">
@@ -185,7 +185,7 @@
                         {{ 'RMS_SCHEDULER.TimelineAction.endTime' | translate }}:
                     </div>
                     <div class="col-md-8 timelineInfoValue">
-                        {{pinnedTimelineAction.endTime | date:'medium'}}
+                        {{pinnedTimelineAction.endTime | amCalendar:referenceTime:formats}}
                     </div>
                 </div>
                 <div class="row">

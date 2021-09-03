@@ -11,6 +11,7 @@ import alien4cloud.paas.model.PaaSDeploymentContext;
 import lombok.extern.slf4j.Slf4j;
 import org.alien4cloud.rmsscheduler.dao.SessionHandler;
 import org.alien4cloud.rmsscheduler.model.RuleTrigger;
+import org.alien4cloud.rmsscheduler.model.timeline.TimelineAction;
 import org.kie.api.runtime.rule.FactHandle;
 import org.springframework.stereotype.Service;
 
@@ -18,7 +19,7 @@ import javax.annotation.Resource;
 
 @Slf4j
 @Service
-public class CancelWorkflowAction implements RuleAction {
+public class CancelWorkflowAction implements RuleAction<TimelineAction> {
 
     @Resource
     private DeploymentService deploymentService;
@@ -29,17 +30,17 @@ public class CancelWorkflowAction implements RuleAction {
     @Resource
     private OrchestratorPluginService orchestratorPluginService;
 
-    public void execute(RuleTrigger ruleTrigger, SessionHandler sessionHandler, FactHandle factHandle) {
-        Deployment deployment = deploymentService.getActiveDeploymentOrFail(ruleTrigger.getEnvironmentId());
+    public void execute(TimelineAction timelineAction, SessionHandler sessionHandler, FactHandle factHandle) {
+        Deployment deployment = deploymentService.getOrfail(timelineAction.getDeploymentId());
         DeploymentTopology deploymentTopology = deploymentRuntimeStateService.getRuntimeTopologyFromEnvironment(deployment.getEnvironmentId());
         PaaSDeploymentContext context = new PaaSDeploymentContext(deployment,deploymentTopology,null);
 
         IOrchestratorPlugin orchestratorPlugin = orchestratorPluginService.getOrFail(deployment.getOrchestratorId());
 
-        orchestratorPlugin.cancelTask(context, ruleTrigger.getExecutionId(), new IPaaSCallback<String>() {
+        orchestratorPlugin.cancelTask(context, timelineAction.getExecutionId(), new IPaaSCallback<String>() {
             @Override
             public void onSuccess(String data) {
-                log.warn("Execution {} cancelled with success", ruleTrigger.getExecutionId());
+                log.warn("Execution {} cancelled with success", timelineAction.getExecutionId());
             }
 
             @Override

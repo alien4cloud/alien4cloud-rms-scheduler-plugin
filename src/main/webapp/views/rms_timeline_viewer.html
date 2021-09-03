@@ -16,13 +16,15 @@
                     <div class="col-md-3 timelineInfoLabel">
                         {{currentRule.timerType}}:
                     </div>
-                    <div class="col-md-3 timelineInfoValue">
+                    <div class="col-md-9 timelineInfoValue">
                         {{currentRule.timerExpression}}
                     </div>
+                </div>
+                <div class="row">
                     <div class="col-md-3 timelineInfoLabel">
                         {{ 'RMS_SCHEDULER.Rule.Delay' | translate }}:
                     </div>
-                    <div class="col-md-3 timelineInfoValue">
+                    <div class="col-md-9 timelineInfoValue">
                         {{currentRule.delay | amDurationFormat : 'millisecond'}} ({{currentRule.delay/1000}}s)
                     </div>
                 </div>
@@ -30,28 +32,36 @@
                     <div class="col-md-3 timelineInfoLabel">
                         {{ 'RMS_SCHEDULER.Rule.Duration' | translate }}:
                     </div>
-                    <div class="col-md-3 timelineInfoValue">
+                    <div class="col-md-9 timelineInfoValue">
                         {{currentRule.duration | amDurationFormat : 'millisecond'}} ({{currentRule.duration/1000}}s)
                     </div>
+                </div>
+                <div class="row">
                     <div class="col-md-3 timelineInfoLabel">
                         {{ 'RMS_SCHEDULER.Rule.options' | translate }}:
                     </div>
-                    <div class="col-md-3 timelineInfoValue">
+                    <div class="col-md-9 timelineInfoValue">
                         <i class="fa fa-retweet"
                            ng-class="{'text-success' : currentRule.loop}"
-                           uib-tooltip="{{'RMS_SCHEDULER.Rule.loop' | translate }}">
+                           uib-tooltip="{{'RMS_SCHEDULER.Rule.loop.' + currentRule.loop | translate }}">
                         </i>
                         <i class="fa fa-wrench"
                            ng-class="{'text-success' : currentRule.retryOnError}"
-                           uib-tooltip="{{'RMS_SCHEDULER.Rule.retryOnError' | translate }}">
+                           uib-tooltip="{{'RMS_SCHEDULER.Rule.retryOnError.' + currentRule.retryOnError | translate }}">
                         </i>
                         <i class="fa fa-hand-o-up"
                            ng-class="{'text-success' : currentRule.onlyOneRunning}"
-                           uib-tooltip="{{'RMS_SCHEDULER.Rule.onlyOneRunning' | translate }}">
+                           uib-tooltip="{{'RMS_SCHEDULER.Rule.onlyOneRunning.' + currentRule.onlyOneRunning | translate }}">
                         </i>
                         <i class="fa fa-hand-scissors-o"
                            ng-class="{'text-success' : currentRule.cancelOnTimeout}"
-                           uib-tooltip="{{'RMS_SCHEDULER.Rule.cancelOnTimeout' | translate }}">
+                           uib-tooltip="{{'RMS_SCHEDULER.Rule.cancelOnTimeout.' + currentRule.cancelOnTimeout | translate }}">
+                        </i>
+                        <i ng-if="currentRule.maxRun > -1" class="fa fa-hand-peace-o text-success"
+                           uib-tooltip="{{'RMS_SCHEDULER.Rule.maxRun' | translate:{count: currentRule.maxRun} }}">
+                        </i>
+                        <i ng-if="currentRule.maxRun < 0" class="fa fa-hand-peace-o"
+                           uib-tooltip="{{'RMS_SCHEDULER.Rule.unlimitedMaxRun' | translate }}">
                         </i>
                     </div>
                 </div>

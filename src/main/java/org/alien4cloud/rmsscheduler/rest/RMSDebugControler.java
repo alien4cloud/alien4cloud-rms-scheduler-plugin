@@ -1,5 +1,6 @@
 package org.alien4cloud.rmsscheduler.rest;
 
+import alien4cloud.events.HALeaderElectionEvent;
 import alien4cloud.exception.NotFoundException;
 import alien4cloud.rest.model.RestResponse;
 import alien4cloud.rest.model.RestResponseBuilder;
@@ -11,11 +12,15 @@ import org.alien4cloud.rmsscheduler.model.MetricEvent;
 import org.alien4cloud.rmsscheduler.model.Rule;
 import org.kie.api.runtime.KieSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 import java.util.Collection;
 
 /**
@@ -39,6 +44,20 @@ public class RMSDebugControler {
         return builder.build();
     }*/
 
+    @Resource
+    private ApplicationContext alienContext;
+
+    private ThreadPoolTaskScheduler leaderElectionTaskScheduler;
+
+    @PostConstruct
+    public void init() {
+        leaderElectionTaskScheduler = new ThreadPoolTaskScheduler();
+        leaderElectionTaskScheduler.setPoolSize(1);
+        leaderElectionTaskScheduler.setThreadNamePrefix("leader-election-");
+        leaderElectionTaskScheduler.setDaemon(false);
+        leaderElectionTaskScheduler.initialize();
+    }
+
     @RequestMapping(value = "/sessions/{sessionId}", method = RequestMethod.GET, produces = "application/json")
     public RestResponse<Collection<? extends Object>> exploreSession(@PathVariable String sessionId) {
         SessionHandler sessionHandler = sessionDao.get(sessionId);
@@ -59,6 +78,18 @@ public class RMSDebugControler {
             }
         );
         builder.data(result);
+        return builder.build();
+    }
+
+    @RequestMapping(value = "/leader/{leader}", method = RequestMethod.GET, produces = "application/json")
+    public RestResponse<Void> shutdown(@PathVariable Boolean leader) {
+        leaderElectionTaskScheduler.submit(new Runnable() {
+            @Override
+            public void run() {
+                alienContext.publishEvent(new HALeaderElectionEvent(this, leader.booleanValue()));
+            }
+        });
+        RestResponseBuilder<Void> builder = RestResponseBuilder.<Void>builder();
         return builder.build();
     }
 

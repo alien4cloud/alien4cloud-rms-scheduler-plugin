@@ -19,7 +19,7 @@ import java.util.UUID;
 public class TriggerEvent extends AbstractTimelineEvent {
 
     @StringField(indexType = IndexType.not_analyzed, includeInAll = false)
-    private RuleTriggerStatus status;
+    private String status;
 
     @StringField(indexType = IndexType.not_analyzed, includeInAll = false)
     private String triggerId;

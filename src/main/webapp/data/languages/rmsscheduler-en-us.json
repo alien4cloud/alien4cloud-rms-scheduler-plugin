@@ -17,10 +17,24 @@
       "Delay": "Delay",
       "Conditions": "Conditions",
       "options": "Options",
-      "loop": "Loop",
-      "retryOnError": "Retry on error",
-      "onlyOneRunning": "Only 1 running",
-      "cancelOnTimeout": "Cancel on timeout"
+      "loop": {
+        "true": "Loop",
+        "false":"No loop"
+      },
+      "retryOnError": {
+        "true": "Retry on error",
+        "false":"No retry on error"
+      },
+      "onlyOneRunning": {
+        "true": "Only 1 running (run can't overlap)",
+        "false": "Overlap possible"
+      },
+      "cancelOnTimeout": {
+        "true": "Cancel on timeout  (run can't overflow time window)",
+        "false": "No cancel on timeout (run can overflow time window)"
+      },
+      "maxRun": "{{count}} maximum runs",
+      "unlimitedMaxRun":  "Unlimited runs"
     },
     "TimelineAction": {
       "name": "Workflow",

@@ -2,6 +2,8 @@ package org.alien4cloud.rmsscheduler.rest;
 
 import alien4cloud.dao.IESSearchQueryBuilderHelper;
 import alien4cloud.dao.model.GetMultipleDataResult;
+import alien4cloud.deployment.ExecutionService;
+import alien4cloud.model.runtime.Execution;
 import alien4cloud.rest.model.RestResponse;
 import alien4cloud.rest.model.RestResponseBuilder;
 import com.google.common.collect.Maps;
@@ -17,12 +19,13 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.util.Date;
 import java.util.Map;
 
 /**
- * A REST endpoint to publish events that can trigger rules.
+ * A REST endpoint that provides data for rule monitoring screen.
  */
 @Slf4j
 @RestController
@@ -34,6 +37,41 @@ public class RMSTimelineControler {
 
     @Resource
     private SessionDao sessionDao;
+
+    @Resource
+    private ExecutionService executionService;
+
+    /**
+     * At startup, we search for TimelineAction that don't have end date and we check the status of the related execution.
+     */
+    @PostConstruct
+    public void init() {
+        BoolQueryBuilder windowQueryBuilder = QueryBuilders.boolQuery().mustNot(QueryBuilders.existsQuery("endTime"));
+        IESSearchQueryBuilderHelper<TimelineAction> timelineActionQueryBuilder = RMSDao.buildSearchQuery(TimelineAction.class, null).setFilters(windowQueryBuilder).prepareSearch();
+        GetMultipleDataResult<TimelineAction> timelineActionGetMultipleDataResult = timelineActionQueryBuilder.search(0, 10000);
+        TimelineAction[] timelineActions = timelineActionGetMultipleDataResult.getData();
+        log.info("{} TimelineAction's have no end date. Let's check the related execution status.", timelineActions.length);
+        for (TimelineAction timelineAction : timelineActions) {
+            if (timelineAction.getExecutionId() != null) {
+                Execution execution = executionService.getExecution(timelineAction.getExecutionId());
+                if (execution != null && execution.getEndDate() != null) {
+                    timelineAction.setEndTime(execution.getEndDate());
+                    switch (execution.getStatus()) {
+                        case CANCELLED:
+                            timelineAction.setState(TimelineActionState.CANCELLED);
+                            break;
+                        case FAILED:
+                            timelineAction.setState(TimelineActionState.ERROR);
+                            break;
+                        case SUCCEEDED:
+                            timelineAction.setState(TimelineActionState.DONE);
+                            break;
+                    }
+                    RMSDao.save(timelineAction);
+                }
+            }
+        }
+    }
 
     @RequestMapping(value = "/sessions/{deploymentId}", method = RequestMethod.GET, produces = "application/json")
     public RestResponse<Boolean> hasSession(@PathVariable String deploymentId) {
@@ -52,20 +90,6 @@ public class RMSTimelineControler {
         Rule[] data = RMSDao.find(Rule.class, filters, Integer.MAX_VALUE).getData();
 
         return RestResponseBuilder.<Rule[]> builder().data(data).build();
-    }
-
-    @RequestMapping(value = "/events/{deploymentId}", method = RequestMethod.GET, produces = "application/json")
-    public RestResponse<AbstractTimelineEvent[]> getRuleEvents(@PathVariable String deploymentId) {
-        Map<String, String[]> filters = Maps.newHashMap();
-        filters.put("deploymentId", new String[] { deploymentId });
-        AbstractTimelineEvent[] timelineRuleConditionEvents = RMSDao.find(TimelineRuleConditionEvent.class, filters, Integer.MAX_VALUE).getData();
-        AbstractTimelineEvent[] timelineWindows = RMSDao.find(TimelineWindow.class, filters, Integer.MAX_VALUE).getData();
-        AbstractTimelineEvent[] timelineActions = RMSDao.find(TimelineAction.class, filters, Integer.MAX_VALUE).getData();
-        AbstractTimelineEvent[] events = new AbstractTimelineEvent[timelineRuleConditionEvents.length + timelineWindows.length +  timelineActions.length];
-        System.arraycopy(timelineRuleConditionEvents, 0, events, 0, timelineRuleConditionEvents.length);
-        System.arraycopy(timelineWindows, 0, events, 0 + timelineRuleConditionEvents.length, timelineWindows.length);
-        System.arraycopy(timelineActions, 0, events, 0 + timelineRuleConditionEvents.length + timelineWindows.length, timelineActions.length);
-        return RestResponseBuilder.<AbstractTimelineEvent[]> builder().data(events).build();
     }
 
     @RequestMapping(value = "/events/{deploymentId}", method = RequestMethod.POST, produces = "application/json")

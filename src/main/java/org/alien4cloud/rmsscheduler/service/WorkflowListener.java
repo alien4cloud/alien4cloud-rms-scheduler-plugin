@@ -81,20 +81,20 @@ public class WorkflowListener {
             if (event.getWorkflowId().equals(NormativeWorkflowNameConstants.INSTALL)) {
                 kieSessionManager.prepareKieSession(event.getDeploymentId());
             } else {
-                updateFact(event, RuleTriggerStatus.DONE);
+                updateFact(event, TimelineActionState.DONE);
             }
         } else if (event instanceof PaaSWorkflowFailedEvent) {
             if (event.getWorkflowId().equals(NormativeWorkflowNameConstants.INSTALL)) {
                 //ruleDao.deleteHandledRules(event.getDeploymentId());
             } else {
-                updateFact(event, RuleTriggerStatus.ERROR);
+                updateFact(event, TimelineActionState.ERROR);
             }
         } else if (event instanceof PaaSWorkflowCancelledEvent) {
             if (event.getWorkflowId().equals(NormativeWorkflowNameConstants.INSTALL)) {
                 //ruleDao.deleteHandledRules(event.getDeploymentId());
             } else {
                 // we drop the rule (no retry, no loop)
-                updateFact(event, RuleTriggerStatus.CANCELLED);
+                updateFact(event, TimelineActionState.CANCELLED);
             }
         }
     }
@@ -102,38 +102,39 @@ public class WorkflowListener {
     /**
      * If a KIE session is related to this deployment, find the trigger related to the execution and update its status.
      */
-    private void updateFact(AbstractPaaSWorkflowMonitorEvent event, RuleTriggerStatus ruleTriggerStatus) {
+    private void updateFact(AbstractPaaSWorkflowMonitorEvent event, TimelineActionState state) {
         SessionHandler sessionHandler = sessionDao.get(event.getDeploymentId());
         if (sessionHandler == null) {
             // if there is no RMS rules in this deployment, there is no KIE session
             log.debug("No session found for deploymentId {}", event.getDeploymentId());
             return;
         }
-        // Find the trigger related to this execution
-        Collection<FactHandle> factHandles = sessionHandler.getSession().getFactHandles(o ->
-                o instanceof RuleTrigger && event.getExecutionId().equals(((RuleTrigger) o).getExecutionId())
-        );
-        if (factHandles.isEmpty()) {
-            log.debug("No handler found for executionId {}", event.getExecutionId());
-            // in some circumstances, we need to update TimelineAction directly
-            Map<String, String[]> filter = Maps.newHashMap();
-            filter.put("executionId", new String[] {event.getExecutionId()});
-            GetMultipleDataResult<TimelineAction> timelineActionResult = rmsDao.find(TimelineAction.class, filter, 10000);
-            for (TimelineAction timelineAction : timelineActionResult.getData()) {
-                timelineAction.setEndTime(new Date(event.getDate()));
-                TimelineActionState timelineActionState = TimelineActionState.valueOf(ruleTriggerStatus.name());
-                if (timelineActionState != null) {
-                    timelineAction.setState(TimelineActionState.valueOf(ruleTriggerStatus.name()));
+        sessionHandler.lock();
+        try {
+            // Find the trigger related to this execution
+            Collection<FactHandle> factHandles = sessionHandler.getSession().getFactHandles(o ->
+                    o instanceof TimelineAction && event.getExecutionId().equals(((TimelineAction) o).getExecutionId())
+            );
+            if (factHandles.isEmpty()) {
+                log.debug("No handler found for executionId {}", event.getExecutionId());
+                // in some circumstances, we need to update TimelineAction directly
+                Map<String, String[]> filter = Maps.newHashMap();
+                filter.put("executionId", new String[]{event.getExecutionId()});
+                GetMultipleDataResult<TimelineAction> timelineActionResult = rmsDao.find(TimelineAction.class, filter, 10000);
+                for (TimelineAction timelineAction : timelineActionResult.getData()) {
+                    timelineAction.setEndTime(new Date(event.getDate()));
+                    timelineAction.setState(state);
+                    rmsDao.save(timelineAction);
                 }
-                rmsDao.save(timelineAction);
+                return;
             }
-            return;
+            factHandles.forEach(factHandle -> {
+                TimelineAction ruleTrigger = (TimelineAction) sessionHandler.getSession().getObject(factHandle);
+                KieUtils.updateTimelineAction(sessionHandler, ruleTrigger, factHandle, state);
+            });
+        } finally {
+            sessionHandler.unlock();
         }
-        factHandles.forEach(factHandle -> {
-            RuleTrigger ruleTrigger = (RuleTrigger)sessionHandler.getSession().getObject(factHandle);
-            //ruleTrigger.setExecutionId(null);
-            KieUtils.updateRuleTrigger(sessionHandler.getSession(), ruleTrigger, factHandle, ruleTriggerStatus);
-        });
     }
 
 }

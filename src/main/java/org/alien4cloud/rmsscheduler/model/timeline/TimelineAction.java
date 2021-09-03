@@ -18,6 +18,9 @@ public class TimelineAction extends AbstractTimelinePeriod {
     @StringField(indexType = IndexType.not_analyzed, includeInAll = false)
     private String name;
 
+    @StringField(indexType = IndexType.not_analyzed, includeInAll = false)
+    private String triggerId;
+
     @TermFilter
     @StringField(indexType = IndexType.not_analyzed, includeInAll = false)
     private String executionId;

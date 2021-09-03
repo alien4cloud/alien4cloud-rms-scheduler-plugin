@@ -1,16 +1,7 @@
 package rules
 
-##import org.alien4cloud.rmsscheduler.model.RuleTrigger
-##import org.alien4cloud.rmsscheduler.model.RuleTriggerStatus
-####import org.alien4cloud.rmsscheduler.model.RuleTriggerEvent
-####import org.alien4cloud.rmsscheduler.model.RuleTriggerEventState
-##import org.alien4cloud.rmsscheduler.model.MetricEvent
-##import org.alien4cloud.rmsscheduler.model.TickTocker
-##import java.util.Date
-##import java.util.Calendar
-##import java.util.List
-
 #set($maxSalience = 10 + ($rule.conditions.size() * 3) + 1)
+// This rule is driven wy the timer, it just insert a RuleTrigger object that represents the time window
 rule "$rule.id: Schedule"
     salience $maxSalience
     timer ( $rule.timerType: $rule.timerExpression )
@@ -22,7 +13,8 @@ rule "$rule.id: Schedule"
 	end
 
 #set($salience = $maxSalience - 1)
-rule "$rule.id: Reset remaining conditions"
+// At each session fire (heartbeat), we eventually insert a RuleTriggerHeartbeat
+rule "$rule.id: Insert trigger heartbeat"
     salience $salience
     //activation-group "condition-trigger"
     //activation-group "condition-$velocityCount"
@@ -33,19 +25,25 @@ rule "$rule.id: Reset remaining conditions"
 #end## if($rule.onlyOneRunning)
 	    A scheduled non expired trigger exists with id $rule.id
 	then
+	    //Log "---- insert new trigger heartbeat for $rule.id -----"
         Insert a new trigger heartbeat
 	end
 
+// For each condition we have 3 rules:
+// - we test if condition is passed
+// - we test if condition fails
+// - we detect change in condition (transition passed > failed or failed > passed)
 #foreach ($condition in $rule.conditions)
 #set($salience = $salience - 1)
+// If condition pass, we decrement the trigger remaining conditions count
 rule "$rule.id: Condition #$velocityCount ($condition)"
     salience $salience
 	when
 	    A trigger heartbeat exists for rule "$rule.id"
 	    No condition event for condition #$velocityCount exists
 	    No failed condition event exists
+// the condition itself
 $condition
-
 	then
         Decrement the trigger remaining conditions
         Fire a condition event for condition #$velocityCount with value true
@@ -58,7 +56,6 @@ rule "$rule.id: Failed condition #$velocityCount ($condition)"
         A trigger heartbeat exists for rule "$rule.id"
         No condition event for condition #$velocityCount exists
         No failed condition event exists
-
 	then
         Fire a condition event for condition #$velocityCount with value false
 	end
@@ -70,7 +67,6 @@ rule "$rule.id: Test changed condition #$velocityCount ($condition)"
         A trigger heartbeat exists for rule "$rule.id"
         We detect several condition events for condition #$velocityCount
         Condition event passed changed detected
-
 	then
 	    Fire a fake condition event
 	    Fire an event for condition #$velocityCount
@@ -79,15 +75,15 @@ rule "$rule.id: Test changed condition #$velocityCount ($condition)"
 #end## foreach ($condition in $rule.conditions)
 
 #set($salience = $salience - 1)
+// If the current trigger heartbeat has no remaining conditions, we can fire the trigger
 rule "$rule.id: Conditionnal trigger"
     salience $salience
     activation-group "condition-trigger"
 	when
 	    A trigger heartbeat without remaining conditions exists for rule "$rule.id"
         A scheduled non expired trigger exists with id $rule.id
-
 	then
-	    Log "---- Trigger $rule.id -----"
+	    //Log "---- Trigger $rule.id -----"
         Fire the trigger
 	end
 
@@ -102,6 +98,7 @@ rule "$rule.id: Delete 0 time window"
 	end
 
 #set($salience = $salience - 1)
+// The retry rule: will reschedule the trigger in case of error
 rule "$rule.id: Retry"
     salience $maxSalience
     enabled $rule.retryOnError
@@ -112,6 +109,7 @@ rule "$rule.id: Retry"
 		Reschedule the trigger in $rule.delay
 	end
 
+// The loop rule: will reschedule the trigger in case of success
 rule "$rule.id: Loop"
     salience $maxSalience
     enabled $rule.loop
@@ -120,4 +118,15 @@ rule "$rule.id: Loop"
 	then
 	    Log "---- Re-schedule de $rule.id -----"
 		Reschedule the trigger in $rule.delay
+	end
+
+// The timeout rule: will timeout the action if the trigger expires
+rule "$rule.id: Timeout"
+    salience $maxSalience
+    enabled $rule.cancelOnTimeout
+	when
+	    A expired trigger exists with id $rule.id
+        A running action exists for current trigger
+	then
+		Timeout the action
 	end

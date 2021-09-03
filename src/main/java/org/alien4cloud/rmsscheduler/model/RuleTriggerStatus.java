@@ -6,16 +6,16 @@ public enum RuleTriggerStatus {
     SCHEDULED,
     /** All conditions are met, the rule is triggered, the action should be executed. */
     TRIGGERED,
-    /** The action is executing. */
-    RUNNING,
-    /** The action has be executed with success. */
-    DONE,
-    /** The action has finished with error. */
-    ERROR,
-    /** The rule was running, but the end of time window is reached. */
-    TIMEOUT,
-    /** The rule was running, but the end of time window is reached. */
-    CANCELLED,
+//    /** The action is executing. */
+//    RUNNING,
+//    /** The action has be executed with success. */
+//    DONE,
+//    /** The action has finished with error. */
+//    ERROR,
+//    /** The rule was running, but the end of time window is reached. */
+//    TIMEOUT,
+//    /** The rule was running, but the end of time window is reached. */
+//    CANCELLED,
     /** The rule has not been triggered before it's expirationDate, it's cancelled. */
     DROPPED,
     /** Nothing more to do with this trigger, it has been deleted. */

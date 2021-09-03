@@ -1,5 +1,6 @@
 package org.alien4cloud.rmsscheduler.model;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -11,10 +12,13 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class RuleTriggerHeartbeat {
 
     /** Fed with Ticktocker timestamp (unique in a session). */
+    @EqualsAndHashCode.Include
     private long id;
+
     private String triggerId;
     private String ruleId;
     private String deploymentId;

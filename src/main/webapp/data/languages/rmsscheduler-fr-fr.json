@@ -17,10 +17,24 @@
       "Delay": "Délai",
       "Conditions": "Conditions",
       "options": "Options",
-      "loop": "Boucle",
-      "retryOnError": "Rejeu en cas d'erreur",
-      "onlyOneRunning": "1 seule execution simultanée",
-      "cancelOnTimeout": "Annuler en cas de dépassement"
+      "loop": {
+        "true": "Boucle",
+        "false":"Pas de répétitions"
+      },
+      "retryOnError": {
+        "true": "Rejeu en cas d'erreur",
+        "false":"Pas de rejeu en cas d'erreur"
+      },
+      "onlyOneRunning": {
+        "true": "1 seule execution simultanée",
+        "false": "Les exécutions peuvent s'empiler"
+      },
+      "cancelOnTimeout": {
+        "true": "Annuler en cas de dépassement  (les exécutions ne peuvent pas dépasser la limite de temps)",
+        "false": "Ne pas annuler en cas de dépassement  (les exécutions peuvent dépasser la limite de temps)"
+      },
+      "maxRun": "{{count}} executions maximum",
+      "unlimitedMaxRun":  "Pas de limites du nombre d'exécutions"
     },
     "TimelineAction": {
       "name": "Workflow",

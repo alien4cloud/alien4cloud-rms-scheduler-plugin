@@ -5,8 +5,6 @@ import org.alien4cloud.rmsscheduler.model.RuleTrigger;
 import org.kie.api.runtime.rule.FactHandle;
 import org.slf4j.Logger;
 
-public interface RuleAction {
-
-    void execute(RuleTrigger ruleTrigger, SessionHandler sessionHandler, FactHandle factHandle);
-
+public interface RuleAction<T extends Object> {
+    void execute(T ruleTrigger, SessionHandler sessionHandler, FactHandle factHandle);
 }

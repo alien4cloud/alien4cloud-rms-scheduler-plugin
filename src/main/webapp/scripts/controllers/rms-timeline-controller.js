@@ -64,6 +64,9 @@ define(function (require) {
         {'label': '10 s', 'value': 10000},
         {'label': '60 s', 'value': 60000}
       ];
+      // Dates for search form
+      $scope.fromDate = undefined;
+      $scope.toDate = undefined;
 
       // the reference to the poller 'job'
       var scheduledPoller;
@@ -418,19 +421,25 @@ define(function (require) {
           end: timeWindow.end.valueOf() - timeInterval * percentage
         }, stopFollowNow);
       };
-      $scope.setFromDate = function(date) {
-        var timeWindow = timeline.getWindow();
+      $scope.datesChanged = function() {
         timeline.setWindow({
-          start: date.valueOf(),
-          end: timeWindow.end.valueOf()
+          start: $scope.fromDate.valueOf(),
+          end: $scope.toDate.valueOf()
         }, stopFollowNow);
       };
+      $scope.setFromDate = function(date) {
+        $scope.fromDate = date;
+        if (_.undefined($scope.toDate)) {
+          $scope.toDate = date;
+        }
+        $scope.datesChanged();
+      };
       $scope.setToDate = function(date) {
-        var timeWindow = timeline.getWindow();
-        timeline.setWindow({
-          start: timeWindow.start.valueOf(),
-          end: date.valueOf()
-        }, stopFollowNow);
+        $scope.toDate = date;
+        if (_.undefined($scope.fromDate)) {
+          $scope.fromDate = date;
+        }
+        $scope.datesChanged();
       };
 
       $scope.toggleFollowTime = function () {

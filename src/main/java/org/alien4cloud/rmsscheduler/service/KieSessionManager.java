@@ -25,6 +25,7 @@ import org.alien4cloud.rmsscheduler.service.actions.LaunchWorkflowAction;
 import org.alien4cloud.rmsscheduler.utils.Const;
 import org.alien4cloud.rmsscheduler.utils.KieUtils;
 import org.alien4cloud.tosca.model.templates.PolicyTemplate;
+import org.alien4cloud.tosca.normative.primitives.Time;
 import org.alien4cloud.tosca.utils.TopologyNavigationUtil;
 import org.apache.lucene.util.NamedThreadFactory;
 import org.kie.api.KieBase;
@@ -34,6 +35,7 @@ import org.kie.api.conf.EventProcessingOption;
 import org.kie.api.event.rule.*;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.rule.FactHandle;
+import org.kie.internal.logger.KnowledgeRuntimeLoggerFactory;
 import org.kie.internal.utils.KieHelper;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Service;
@@ -46,6 +48,9 @@ import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * In charge of :
@@ -121,18 +126,23 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
         //now.set(Calendar.MILLISECOND, 0);
 
         sessionDao.list().forEach(sessionHandler -> {
-            KieSession kieSession = sessionHandler.getSession();
-            // Refresh the ticktocker
-            TickTocker tickTocker = (TickTocker)kieSession.getObject(sessionHandler.getTicktockerHandler());
-            tickTocker.setNow(now.getTime());
-            kieSession.update(sessionHandler.getTicktockerHandler(), tickTocker);
-            // Fire rules
+            sessionHandler.lock();
             try {
+                KieSession kieSession = sessionHandler.getSession();
+                // Refresh the ticktocker
+                TickTocker tickTocker = (TickTocker) kieSession.getObject(sessionHandler.getTicktockerHandler());
+                tickTocker.setNow(now.getTime());
+                kieSession.update(sessionHandler.getTicktockerHandler(), tickTocker);
+                // Fire rules
                 long startTime = System.currentTimeMillis();
                 kieSession.fireAllRules();
-                log.trace("Took {}ms to fire all rules for session {}", System.currentTimeMillis() - startTime, sessionHandler.getId());
-            } catch(Exception e) {
+                if (log.isTraceEnabled()) {
+                    log.trace("Took {}ms to fire all rules for session {}", System.currentTimeMillis() - startTime, sessionHandler.getId());
+                }
+            } catch (Exception e) {
                 log.error("Error while firing rules for session " + sessionHandler.getId(), e);
+            } finally {
+                sessionHandler.unlock();
             }
         });
     }
@@ -166,7 +176,7 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
         }
     }
 
-    // should manage n rule per session (1 session = 1 deployment, n policies)
+    // Manage n rule per session (1 session = 1 deployment, n policies)
     private synchronized void initKieSession(String deploymentId, Collection<Rule> rules) {
 
         if (sessionDao.get(deploymentId) != null) {
@@ -187,6 +197,7 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
             KieBase kieBase = kieHelper.build(EventProcessingOption.STREAM);
             KieSession kieSession = kieBase.newKieSession();
             kieSession.addEventListener(this);
+            //kieSession.addEventListener(new org.drools.core.event.DebugAgendaEventListener());
 
             SessionHandler sessionHandler = new SessionHandler();
             sessionHandler.setId(deploymentId);
@@ -224,19 +235,20 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
             Date now = getDateFromSession(event);
 
             TriggerEvent triggerEvent = new TriggerEvent();
-            triggerEvent.setStatus(rt.getStatus());
+            triggerEvent.setStatus(rt.getStatus().name());
             triggerEvent.setDeploymentId(rt.getDeploymentId());
             triggerEvent.setRuleId(rt.getRuleId());
             triggerEvent.setStartTime(now);
             triggerEvent.setTriggerId(rt.getId());
             this.rmsDao.save(triggerEvent);
-        }
-        if (o instanceof TimelineRuleConditionEvent) {
+        } else if (o instanceof TimelineRuleConditionEvent) {
             if (log.isDebugEnabled()) {
                 log.debug("TimelineRuleConditionEvent fired in rule {}: {}", (event.getRule() == null) ? "Unknown" : event.getRule().getName(), o.toString());
             }
             TimelineRuleConditionEvent rte = (TimelineRuleConditionEvent)o;
             this.rmsDao.save(rte);
+        } else if (o instanceof TimelineAction) {
+            this.rmsDao.save((TimelineAction)o);
         }
     }
 
@@ -248,7 +260,7 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
             now = tocker.getNow();
         } else {
             // Fail over using current date (should never occur)
-            log.debug("Not able to retreive date from event session");
+            log.debug("Not able to retrieve date from event session");
             now = new Date();
         }
         return now;
@@ -261,7 +273,57 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
         if (log.isTraceEnabled()) {
             log.trace("Object updated in rule {}: {}", (event.getRule() == null) ? "Unknown" : event.getRule().getName(), o.toString());
         }
-        if (o instanceof RuleTrigger) {
+        if (o instanceof TimelineAction) {
+            log.debug("TimelineAction updated in rule {}: {}", (event.getRule() == null) ? "Unknown" : event.getRule().getName(), o.toString());
+            final TimelineAction r = (TimelineAction)o;
+            final String executionId = r.getExecutionId();
+            SessionHandler sessionHandler = sessionDao.get(r.getDeploymentId());
+            if (sessionHandler == null) {
+                log.warn("No session found for {}", r);
+                return;
+            }
+            sessionHandler.lock();
+            try {
+                Date now = getDateFromSession(event);
+
+                TriggerEvent triggerEvent = new TriggerEvent();
+                triggerEvent.setStatus(r.getState().name());
+                triggerEvent.setDeploymentId(r.getDeploymentId());
+                triggerEvent.setRuleId(r.getRuleId());
+                // how to take time from session ?
+                triggerEvent.setStartTime(now);
+                triggerEvent.setTriggerId(r.getId());
+                this.rmsDao.save(triggerEvent);
+
+                switch (r.getState()) {
+                    case RUNNING:
+                        break;
+                    case DONE:
+                    case ERROR:
+                    case CANCELLED:
+                        // End of the TimelineAction
+                        if (executionId != null) {
+                            TimelineAction timelineAction = this.rmsDao.findById(TimelineAction.class, executionId);
+                            if (timelineAction != null) {
+                                timelineAction.setEndTime(now);
+                                timelineAction.setState(r.getState());
+                                this.rmsDao.save(timelineAction);
+                            } else {
+                                // TODO Warn
+                                log.debug("Not able to find TimelineAction for execution {} to set it to {}", executionId, r.getState());
+                            }
+                        }
+                        break;
+                    case TIMEOUT:
+                        // Cancel running execution only if option cancel_on_timeout is set
+                        log.debug("Cancel execution {}", executionId);
+                        cancelWorkflowAction.execute(r, sessionHandler, event.getFactHandle());
+                        break;
+                }
+            } finally {
+                sessionHandler.unlock();
+            }
+        } else if (o instanceof RuleTrigger) {
             log.debug("RuleTrigger updated in rule {}: {}", (event.getRule() == null) ? "Unknown" : event.getRule().getName(), o.toString());
             final RuleTrigger r = (RuleTrigger)o;
             final String executionId = r.getExecutionId();
@@ -270,91 +332,30 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
                 log.warn("No session found for {}", r);
                 return;
             }
+            sessionHandler.lock();
+            try {
+                Date now = getDateFromSession(event);
 
-            Date now = getDateFromSession(event);
+                TriggerEvent triggerEvent = new TriggerEvent();
+                triggerEvent.setStatus(r.getStatus().name());
+                triggerEvent.setDeploymentId(r.getDeploymentId());
+                triggerEvent.setRuleId(r.getRuleId());
+                // how to take time from session ?
+                triggerEvent.setStartTime(now);
+                triggerEvent.setTriggerId(r.getId());
+                this.rmsDao.save(triggerEvent);
 
-
-            TriggerEvent triggerEvent = new TriggerEvent();
-            triggerEvent.setStatus(r.getStatus());
-            triggerEvent.setDeploymentId(r.getDeploymentId());
-            triggerEvent.setRuleId(r.getRuleId());
-            // how to take time from session ?
-            triggerEvent.setStartTime(now);
-            triggerEvent.setTriggerId(r.getId());
-            this.rmsDao.save(triggerEvent);
-
-            switch(r.getStatus()) {
-                case SCHEDULED:
-                    //rte.setState(RuleTriggerEventState.SCHEDULED);
-                    break;
-                case TRIGGERED:
-                    log.debug("Launching worflow for {}", r);
-                    launchWorkflowAction.execute(r, sessionHandler, event.getFactHandle());
-                    break;
-                case RUNNING:
-                    // Start of the TimelineAction
-                    TimelineAction timelineAction = new TimelineAction();
-                    timelineAction.setId(executionId);
-                    timelineAction.setDeploymentId(r.getDeploymentId());
-                    timelineAction.setRuleId(r.getRuleId());
-                    timelineAction.setExecutionId(executionId);
-                    timelineAction.setStartTime(now);
-                    timelineAction.setState(TimelineActionState.RUNNING);
-                    timelineAction.setName(r.getAction());
-                    this.rmsDao.save(timelineAction);
-                    break;
-                case DONE:
-                    // End of the TimelineAction
-                    timelineAction = this.rmsDao.findById(TimelineAction.class, executionId);
-                    if (timelineAction != null) {
-                        timelineAction.setEndTime(now);
-                        timelineAction.setState(TimelineActionState.DONE);
-                        this.rmsDao.save(timelineAction);
-                    } else {
-                        // TODO Warn
-                        log.debug("Not able to find TimelineAction for execution {} to set it to {}", executionId, TimelineActionState.DONE);
-                    }
-                    break;
-                case ERROR:
-                    //rte.setState(RuleTriggerEventState.ERROR);
-                    // End of the TimelineAction
-                    if (executionId != null) {
-                        // error can occr
-                        timelineAction = this.rmsDao.findById(TimelineAction.class, executionId);
-                        if (timelineAction != null) {
-                            timelineAction.setEndTime(now);
-                            timelineAction.setState(TimelineActionState.ERROR);
-                            this.rmsDao.save(timelineAction);
-                        } else {
-                            // TODO Warn
-                            log.debug("Not able to find TimelineAction for execution {} to set it to {}", executionId, TimelineActionState.ERROR);
-                        }
-                    }
-                    break;
-                case TIMEOUT:
-                    // Cancel running execution only if option cancel_on_timeout is set
-                    Rule rule = sessionHandler.getRules().get(r.getRuleId());
-                    log.debug("Rule found: {}", rule);
-                    if (rule.isCancelOnTimeout()) {
-                        log.debug("Cancel execution {}", executionId);
-                        cancelWorkflowAction.execute(r, sessionHandler, event.getFactHandle());
-                    }
-                    break;
-                case CANCELLED:
-                    // Cancel running execution only if option cancel_on_timeout is set
-                    timelineAction = this.rmsDao.findById(TimelineAction.class, executionId);
-                    // End of the TimelineAction
-                    if (timelineAction != null) {
-                        timelineAction.setEndTime(now);
-                        timelineAction.setState(TimelineActionState.CANCELLED);
-                        this.rmsDao.save(timelineAction);
-                    } else {
-                        // TODO Warn
-                        log.debug("Not able to find TimelineAction for execution {} to set it to {}", executionId, TimelineActionState.CANCELLED);
-                    }
-                    break;
-                case DROPPED:
-                    break;
+                switch (r.getStatus()) {
+                    case SCHEDULED:
+                        //rte.setState(RuleTriggerEventState.SCHEDULED);
+                        break;
+                    case TRIGGERED:
+                        log.debug("Launching worflow for {}", r);
+                        launchWorkflowAction.execute(r, sessionHandler, event.getFactHandle());
+                        break;
+                }
+            } finally {
+                sessionHandler.unlock();
             }
         }
     }
@@ -372,7 +373,7 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
 
             RuleTrigger r = (RuleTrigger)o;
             TriggerEvent triggerEvent = new TriggerEvent();
-            triggerEvent.setStatus(RuleTriggerStatus.DELETED);
+            triggerEvent.setStatus(RuleTriggerStatus.DELETED.name());
             triggerEvent.setDeploymentId(r.getDeploymentId());
             triggerEvent.setRuleId(r.getRuleId());
             // how to take time from session ?
@@ -435,9 +436,14 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
         log.debug("Deployment ends {}", deploymentUndeployedEvent.getDeploymentId());
         SessionHandler sessionHandler = sessionDao.get(deploymentUndeployedEvent.getDeploymentId());
         if (sessionHandler != null) {
-            sessionHandler.getSession().halt();
-            sessionHandler.getSession().dispose();
-            sessionDao.delete(sessionHandler);
+            sessionHandler.lock();
+            try {
+                sessionHandler.getSession().halt();
+                sessionHandler.getSession().dispose();
+                sessionDao.delete(sessionHandler);
+            } finally {
+                sessionHandler.unlock();
+            }
             //ruleDao.deleteHandledRules(deploymentUndeployedEvent.getDeploymentId());
         }
     }

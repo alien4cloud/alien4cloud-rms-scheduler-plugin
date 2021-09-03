@@ -1,9 +1,12 @@
 package org.alien4cloud.rmsscheduler.utils;
 
 import alien4cloud.utils.PropertyUtil;
+import org.alien4cloud.rmsscheduler.dao.SessionHandler;
 import org.alien4cloud.rmsscheduler.model.Rule;
 import org.alien4cloud.rmsscheduler.model.RuleTrigger;
 import org.alien4cloud.rmsscheduler.model.RuleTriggerStatus;
+import org.alien4cloud.rmsscheduler.model.timeline.TimelineAction;
+import org.alien4cloud.rmsscheduler.model.timeline.TimelineActionState;
 import org.alien4cloud.tosca.model.definitions.ListPropertyValue;
 import org.alien4cloud.tosca.model.templates.PolicyTemplate;
 import org.drools.core.time.TimeUtils;
@@ -28,9 +31,14 @@ public class KieUtils {
         return sb.toString();
     }
 
-    public static void updateRuleTrigger(KieSession session, RuleTrigger ruleTrigger, FactHandle factHandle, RuleTriggerStatus status) {
-        ruleTrigger.setStatus(status);
-        session.update(factHandle, ruleTrigger);
+    public static void updateTimelineAction(SessionHandler session, TimelineAction timelineAction, FactHandle factHandle, TimelineActionState state) {
+        session.lock();
+        try {
+            timelineAction.setState(state);
+            session.getSession().update(factHandle, timelineAction);
+        } finally {
+            session.unlock();
+        }
     }
 
     public static Rule buildRuleFromPolicy(String environmentId, String deploymentId, PolicyTemplate policy) {

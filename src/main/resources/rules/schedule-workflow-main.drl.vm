@@ -4,8 +4,8 @@ import org.alien4cloud.rmsscheduler.model.RuleTrigger
 import org.alien4cloud.rmsscheduler.model.RuleTriggerStatus
 import org.alien4cloud.rmsscheduler.model.RuleTriggerHeartbeat
 import org.alien4cloud.rmsscheduler.model.timeline.TimelineRuleConditionEvent
-##import org.alien4cloud.rmsscheduler.model.RuleTriggerEvent
-##import org.alien4cloud.rmsscheduler.model.RuleTriggerEventState
+import org.alien4cloud.rmsscheduler.model.timeline.TimelineAction
+import org.alien4cloud.rmsscheduler.model.timeline.TimelineActionState
 import org.alien4cloud.rmsscheduler.model.MetricEvent
 import org.alien4cloud.rmsscheduler.model.TickTocker
 import java.util.Date
@@ -26,7 +26,7 @@ end
 declare RuleTrigger
     //@propertyReactive
     status : RuleTriggerStatus
-    id: String
+    id: String @key
     ruleId: String
     environmentId: String
     deploymentId: String
@@ -42,22 +42,24 @@ end
 declare RuleTriggerHeartbeat
 	@role( event )
 	//@propertyReactive
-    id: long
+    id: long @key
     triggerId: String
     deploymentId: String
     ruleId: String
     remainingConditionsCount: int
 end
-##declare RuleTriggerEvent
-##	@role( event )
-##	@timestamp( timestamp )
-##    triggerId: String
-##    deploymentId: String
-##    ruleId: String
-##    state: RuleTriggerEventState
-##    conditionIdx: int
-##    timestamp: long
-##end
+declare TimelineAction
+    id: String @key
+    name: String
+    triggerId: String
+    executionId: String
+    state: TimelineActionState
+    endTime: Date
+    deploymentId: String
+    ruleId: String
+    startTime: Date
+    type: String
+end
 declare ConditionEvent
 	@role( event )
     triggerId: String
@@ -66,42 +68,39 @@ declare ConditionEvent
     passed: boolean
 end
 
-rule "Main: Cancel schedule rule"
-    salience 100
+rule "Main: Delete DONE or ERROR action"
+    salience -200
+	when
+		$r: TimelineAction(state == TimelineActionState.DONE || state == TimelineActionState.ERROR || state == TimelineActionState.CANCELLED)
+	then
+		delete($r);
+	end
+
+rule "Main: Delete execution rule"
+    salience -201
 	when
 	    $tickTocker: TickTocker()
-		$r: RuleTrigger(status == RuleTriggerStatus.SCHEDULED, expirationDelay > 0 && $tickTocker.now > expirationTime)
+		$r: RuleTrigger(expirationDelay > 0 && $tickTocker.now > expirationTime)
+		not TimelineAction(triggerId == $r.id)
 	then
 		modify($r) {
             setStatus(RuleTriggerStatus.DROPPED)
         }
 	end
 
-rule "Main: Timeout execution rule"
-    salience 100
+rule "Main: Delete dropped trigger"
+    salience -202
 	when
-	    $tickTocker: TickTocker()
-		$r: RuleTrigger(status == RuleTriggerStatus.RUNNING, expirationDelay > 0 && $tickTocker.now > expirationTime)
-	then
-		modify($r) {
-            setStatus(RuleTriggerStatus.TIMEOUT)
-        }
-	end
-
-rule "Main: Delete execution rule"
-    salience 100
-	when
-	    $tickTocker: TickTocker()
-		$r: RuleTrigger(status != RuleTriggerStatus.RUNNING && status != RuleTriggerStatus.SCHEDULED && status != RuleTriggerStatus.TIMEOUT, expirationDelay > 0 && $tickTocker.now > expirationTime)
+		$r: RuleTrigger(status == RuleTriggerStatus.DROPPED)
 	then
 		delete($r);
 	end
 
-rule "Main: Delete DONE or ERROR rule"
+rule "Main: Delete RuleTriggerHeartbeat"
     salience -100
 	when
-		$r: RuleTrigger(status == RuleTriggerStatus.DONE || status == RuleTriggerStatus.ERROR || status == RuleTriggerStatus.CANCELLED)
+		$tickTocker: TickTocker()
+		$h: RuleTriggerHeartbeat(id == $tickTocker.getNow().getTime())
 	then
-		delete($r);
+		delete($h);
 	end
-

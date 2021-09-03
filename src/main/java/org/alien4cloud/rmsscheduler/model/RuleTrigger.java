@@ -1,5 +1,6 @@
 package org.alien4cloud.rmsscheduler.model;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -13,12 +14,15 @@ import java.util.UUID;
  * It's created by Drools rules themself and their changes are listened in order to execute action (ie. launch workflow).
  *
  * A RuleTrigger has a scheduleTime (begin of the temporal window inside it can trigger) and a expirationTime (end of this same temporal window).
+ * In case of retry or loop, the scheduleTime represents the next time the action should be run.
  */
 @Getter
 @Setter
 @ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class RuleTrigger {
 
+    @EqualsAndHashCode.Include
     public String id;
 
     /**
@@ -113,13 +117,5 @@ public class RuleTrigger {
     public boolean isExpired(Date now) {
         return this.expirationDelay > 0 && this.expirationTime.before(now);
     }
-
-//    public void decrementRemainingConditions() {
-//        this.remainingConditionsCount--;
-//    }
-//
-//    public void resetRemainingConditions() {
-//        this.remainingConditionsCount = this.conditionsCount;
-//    }
 
 }

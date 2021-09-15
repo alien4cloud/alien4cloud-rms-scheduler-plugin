@@ -27,15 +27,15 @@ public class SessionHandler {
     private Lock lock;
 
     public SessionHandler() {
-        //this.lock = new ReentrantLock();
+        this.lock = new ReentrantLock();
     }
 
     public void lock() {
-        //this.getLock().lock();
+        this.getLock().lock();
     }
 
     public void unlock() {
-        //this.getLock().unlock();
+        this.getLock().unlock();
     }
 
 }

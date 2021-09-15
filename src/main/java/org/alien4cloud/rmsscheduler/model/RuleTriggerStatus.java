@@ -6,6 +6,8 @@ public enum RuleTriggerStatus {
     SCHEDULED,
     /** All conditions are met, the rule is triggered, the action should be executed. */
     TRIGGERED,
+    /** The action has been launched. */
+    HANDLED,
 //    /** The action is executing. */
 //    RUNNING,
 //    /** The action has be executed with success. */

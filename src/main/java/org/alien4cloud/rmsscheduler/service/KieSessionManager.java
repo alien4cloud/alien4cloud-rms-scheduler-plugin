@@ -347,11 +347,14 @@ public class KieSessionManager extends DefaultRuleRuntimeEventListener implement
 
                 switch (r.getStatus()) {
                     case SCHEDULED:
+                    case HANDLED:
                         //rte.setState(RuleTriggerEventState.SCHEDULED);
                         break;
                     case TRIGGERED:
                         log.debug("Launching worflow for {}", r);
                         launchWorkflowAction.execute(r, sessionHandler, event.getFactHandle());
+                        r.setStatus(RuleTriggerStatus.HANDLED);
+                        sessionHandler.getSession().update(event.getFactHandle(), r);
                         break;
                 }
             } finally {

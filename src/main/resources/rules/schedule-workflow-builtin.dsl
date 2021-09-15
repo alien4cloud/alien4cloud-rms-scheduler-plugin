@@ -7,7 +7,7 @@
 [when]A scheduled no window trigger exists with id {ruleId}=$tickTocker: TickTocker(); r: RuleTrigger(ruleId == "{ruleId}", status == RuleTriggerStatus.SCHEDULED, scheduleTime <= $tickTocker.now, expirationDelay == 0)
 [when]A expired trigger exists with id {ruleId}=$tickTocker: TickTocker(); $r: RuleTrigger(ruleId == "{ruleId}", expirationDelay > 0 && $tickTocker.now > expirationTime)
 [when]A running action exists for current trigger=$a: TimelineAction(triggerId == $r.id, state == TimelineActionState.RUNNING)
-[when]A trigger with window in {triggerStatus} exists with id {ruleId}=r: RuleTrigger(ruleId == "{ruleId}", status == RuleTriggerStatus.TRIGGERED, expirationDelay > 0); a: TimelineAction(triggerId == r.id, state == TimelineActionState.{triggerStatus})
+[when]A trigger with window in {triggerStatus} exists with id {ruleId}=r: RuleTrigger(ruleId == "{ruleId}", status == RuleTriggerStatus.HANDLED, expirationDelay > 0); a: TimelineAction(triggerId == r.id, state == TimelineActionState.{triggerStatus})
 [when]A trigger heartbeat without remaining conditions exists for rule "{ruleId}"=$t: TickTocker(); h: RuleTriggerHeartbeat(ruleId == "{ruleId}", id == $t.now.time, remainingConditionsCount == 0)
 [when]A trigger heartbeat exists for rule "{ruleId}"=$tickTocker: TickTocker(); h: RuleTriggerHeartbeat(ruleId == "{ruleId}", id == $tickTocker.now.time)
 [when]No running execution with id {ruleId}=not TimelineAction(ruleId == "{ruleId}", state == TimelineActionState.RUNNING)

@@ -52,7 +52,7 @@ public class ConditionsSuggestionProvider implements ISimpleSuggestionPluginProv
     private static final String[] OPERATORS = new String[]{"<", ">", "<=", ">=", "!=", "=="};
 
     public void addDSL(String left, String right) {
-        conditionDsls.put(left, right);
+        conditionDsls.put(left.replaceAll("\\\\", ""), right);
         compileSuggestions();
     }
 

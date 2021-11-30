@@ -1,0 +1,206 @@
+/* line 10, ../../src/main/webapp/styles/plugin.scss */
+
+.timeline-waiting {
+  cursor: wait !important;
+}
+
+/* line 15, ../../src/main/webapp/styles/plugin.scss */
+
+.rmstimeline {
+  width: 800px;
+  height: 300px;
+}
+
+/* line 20, ../../src/main/webapp/styles/plugin.scss */
+
+.vis-item .vis-item-overflow {
+  overflow: visible;
+}
+
+/* line 24, ../../src/main/webapp/styles/plugin.scss */
+
+.vis-box.TimelineRuleConditionEvent {
+  background-color: #f5f4ed !important;
+  border-color: #9d9d9d !important;
+}
+
+/* line 29, ../../src/main/webapp/styles/plugin.scss */
+
+.TimelineRuleConditionEvent_false {
+  color: #c7254e !important;
+  font-size: smaller;
+}
+
+/* line 34, ../../src/main/webapp/styles/plugin.scss */
+
+.TimelineRuleConditionEvent_true {
+  color: #3e8f3e !important;
+  font-size: smaller;
+}
+
+/* line 40, ../../src/main/webapp/styles/plugin.scss */
+
+.vis-dot .TimelineRuleConditionEvent_false {
+  background-color: #c7254e !important;
+}
+
+/* line 43, ../../src/main/webapp/styles/plugin.scss */
+
+.vis-dot .TimelineRuleConditionEvent_true {
+  background-color: #3e8f3e !important;
+}
+
+/* line 47, ../../src/main/webapp/styles/plugin.scss */
+
+.vis-point > .vis-item-content {
+  margin-left: 0px !important;
+}
+
+/* line 51, ../../src/main/webapp/styles/plugin.scss */
+
+.vis-item.vis-point > .vis-item-content {
+  padding-left: 0px !important;
+}
+
+/* line 56, ../../src/main/webapp/styles/plugin.scss */
+
+.vis-item.vis-dot {
+  display: none;
+}
+
+/* line 60, ../../src/main/webapp/styles/plugin.scss */
+
+.vis-item.vis-point {
+  font-size: medium !important;
+}
+
+/* line 64, ../../src/main/webapp/styles/plugin.scss */
+
+.vis-item.vis-point.TriggerEvent {
+  font-size: x-small !important;
+  margin-top: -15px;
+}
+
+/* line 69, ../../src/main/webapp/styles/plugin.scss */
+
+.TimelineActionState {
+  margin-top: -4px !important;
+}
+
+/* line 73, ../../src/main/webapp/styles/plugin.scss */
+
+.TimelineActionState_DONE {
+  background-color: #c1e2b3 !important;
+}
+
+/* line 76, ../../src/main/webapp/styles/plugin.scss */
+
+.TimelineActionState_RUNNING {
+  background-color: #fff785 !important;
+}
+
+/* line 79, ../../src/main/webapp/styles/plugin.scss */
+
+.TimelineActionState_ERROR {
+  background-color: #dca7a7 !important;
+}
+
+/* line 82, ../../src/main/webapp/styles/plugin.scss */
+
+.TimelineActionState_CANCELLED {
+  background-color: #f0ad4e !important;
+}
+
+/* line 86, ../../src/main/webapp/styles/plugin.scss */
+
+.tl_window {
+  background-color: #cfd8e6 !important;
+  height: 30px !important;
+  z-index: -100 !important;
+}
+
+/* line 93, ../../src/main/webapp/styles/plugin.scss */
+
+.tl_window.tl_window_true {
+  background-color: #efefef !important;
+  border-style: dashed !important;
+  height: 30px !important;
+  z-index: -100 !important;
+}
+
+/* line 101, ../../src/main/webapp/styles/plugin.scss */
+
+.vis-tooltip {
+  font-size: x-small !important;
+}
+
+/* line 105, ../../src/main/webapp/styles/plugin.scss */
+
+.timeline {
+  padding-top: 10px;
+}
+
+/* line 109, ../../src/main/webapp/styles/plugin.scss */
+
+.timelineInfoLabel {
+  text-align: right;
+  color: #4D4D4D;
+  font-weight: lighter;
+}
+
+/* line 116, ../../src/main/webapp/styles/plugin.scss */
+
+.timelineInfoValue {
+  font-weight: bolder;
+  margin-left: -25px;
+}
+
+/* line 122, ../../src/main/webapp/styles/plugin.scss */
+
+.space-up {
+  padding-top: 10px;
+}
+
+/* line 126, ../../src/main/webapp/styles/plugin.scss */
+
+.infos {
+  font-size: small;
+  border-color: #9d9d9d;
+  background-color: #efefef;
+  border-style: solid;
+  border-radius: 5px;
+  border-width: 1px;
+  height: 150px;
+  padding: 3px;
+  margin: 3px;
+}
+
+/* line 138, ../../src/main/webapp/styles/plugin.scss */
+
+.info-box {
+  padding-left: 3px;
+  padding-right: 3px;
+}
+
+/* line 143, ../../src/main/webapp/styles/plugin.scss */
+
+.info-box-title {
+  font-size: medium;
+}
+
+/* line 147, ../../src/main/webapp/styles/plugin.scss */
+
+.rule-conditions {
+  overflow: auto;
+  height: 40px;
+  font-size: x-small;
+  margin-left: -25px;
+}
+
+/* line 154, ../../src/main/webapp/styles/plugin.scss */
+
+.refresh-rate {
+  float: left;
+  width: auto;
+  height: 30px;
+}
